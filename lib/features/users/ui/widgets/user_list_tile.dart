@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:movie_discovery/core/router/route_names.dart';
 import 'package:movie_discovery/core/storage/database/app_database.dart';
+import 'package:movie_discovery/core/utils/extensions/context_ext.dart';
 import 'package:movie_discovery/design_system/app_colors.dart';
 import 'package:movie_discovery/design_system/app_text_styles.dart';
 
@@ -25,7 +27,10 @@ class UserListTile extends StatelessWidget {
       title: Row(
         children: [
           Expanded(
-            child: Text(user.name, style: AppTextStyles.h3, maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Text(user.name,
+                style: AppTextStyles.h3,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
           ),
           if (user.pendingSync) ...[
             const SizedBox(width: 6),
@@ -34,18 +39,26 @@ class UserListTile extends StatelessWidget {
         ],
       ),
       subtitle: user.movieTaste.isNotEmpty
-          ? Text(user.movieTaste, style: AppTextStyles.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis)
+          ? Text(user.movieTaste,
+              style: AppTextStyles.bodySmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis)
           : null,
       trailing: item.saveCount > 0
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${item.saveCount} saved',
-                style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+          ? GestureDetector(
+              onTap: () => context.push(RouteNames.savedMovies(user.id)),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${item.saveCount} saved',
+                  style:
+                      AppTextStyles.caption.copyWith(color: AppColors.primary),
+                ),
               ),
             )
           : null,

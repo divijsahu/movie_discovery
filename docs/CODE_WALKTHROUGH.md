@@ -433,30 +433,257 @@ Hooks into `onRequest` and adds the Reqres API key as an `x-api-key` header to e
 
 ### Dio Clients — `core/network/dio_client.dart`
 
-Two separate `Dio` instances as Riverpod `Provider`s:
+Three separate `Dio` instances as Riverpod `Provider`s:
 
 **`reqresDioProvider`**
 - Base URL: `https://reqres.in/api`
-- Interceptors: `ReqresAuthInterceptor` → `RetryInterceptor` → `LogInterceptor` (debug only)
+- Interceptors: `ReqresAuthInterceptor` → `RetryInterceptor` → `AppLogInterceptor` (debug only)
 
 **`tmdbDioProvider`**
 - Base URL: `https://api.themoviedb.org/3`
 - `api_key` query param attached to every request via `BaseOptions.queryParameters`
-- Interceptors: `RetryInterceptor` → `LogInterceptor` (debug only)
+- Interceptors: `RetryInterceptor` → `AppLogInterceptor` (debug only)
 
-Keeping them as separate providers means feature repositories declare exactly which client they depend on — `MoviesRepository` takes `tmdbDioProvider`, `UsersRepository` takes `reqresDioProvider`. There's no shared mutable state between the two.
+**`omdbDioProvider`**
+- Base URL: `https://www.omdbapi.com`
+- `apikey` query param attached globally
+- Interceptors: `RetryInterceptor` → `AppLogInterceptor` (debug only)
+- Used as a fallback when TMDB is unavailable
 
-`LogInterceptor(responseBody: true)` is only added in `kDebugMode` — it prints full request/response bodies to the console during development but is stripped from release builds.
+Keeping them as separate providers means feature repositories declare exactly which client they depend on. `MoviesRepository` takes both `tmdbDioProvider` and `omdbDioProvider`; `UsersRepository` takes only `reqresDioProvider`.
+
+`AppLogInterceptor` (debug only) prints structured `┌─/└─` bordered lines with timing, response summaries, and retry counts. API keys are filtered out of log output.
 
 ---
 
+## Phase 4 — Users Page & Add User
+
+The goal of Phase 4 is to build the first fully working feature: fetch users from Reqres, cache them locally, display them in a live-updating list, and let users be added both online and offline.
+
+---
+
+### User Model — `features/users/data/models/user_model.dart`
+
+A Freezed model matching the Reqres API response. `@JsonKey` on the factory parameters maps `first_name` → `firstName` and `last_name` → `lastName`. The `// ignore_for_file: invalid_annotation_target` suppresses a false-positive lint — the generated code handles the mapping correctly.
+
+`UsersResponse` wraps the paginated response with `page`, `totalPages`, and `data` (the list of users).
+
+---
+
+### Users API — `features/users/data/users_api.dart`
+
+Two methods:
+- `fetchUsers(page)` — GET `/users?page=X`, returns `UsersResponse`
+- `createUser(name, job)` — POST `/users`, returns the raw response map (Reqres returns `{id, name, job, createdAt}`)
+
+Exposed as `usersApiProvider` injecting `reqresDioProvider`.
+
+---
+
+### Users Repository — `features/users/data/users_repository.dart`
+
+The bridge between the API and the local DB:
+
+- `watchUsers()` — returns a `Stream` from the DB. The UI always reads from here, never directly from the API.
+- `fetchAndCachePage(page)` — calls the API, then upserts each user into the DB via `upsertRemoteUser`. Returns `Result<UsersResponse>` so the notifier knows the total page count.
+
+The key insight: the UI stream and the network fetch are completely decoupled. The fetch writes to the DB; the stream reads from the DB. They never talk to each other directly.
+
+---
+
+### Users Notifier — `features/users/logic/users_provider.dart`
+
+`UsersNotifier` is an `AsyncNotifier<void>` — it manages pagination state but doesn't hold the list itself (that lives in the DB stream).
+
+- `build()` — fires on first watch, loads page 1
+- `loadMore()` — called when the scroll position is 200px from the bottom. Guards against concurrent fetches with `_isFetchingMore`.
+- `refresh()` — resets `_currentPage` to 1 and calls `ref.invalidateSelf()` to re-trigger `build()`
+
+`usersStreamProvider` is a separate `StreamProvider` that watches the DB directly — it emits a new list whenever any row in `UsersTable` or `SavedMoviesTable` changes.
+
+---
+
+### Add User Notifier — `features/add_user/logic/add_user_provider.dart`
+
+Handles the online/offline split:
+
+1. Check connectivity via `isOnlineProvider`
+2. Always insert locally first — the user appears in the list immediately regardless of network
+3. **Online path** — POST to Reqres, get back a `serverId`, call `updateServerId` to store it
+4. **POST fails mid-flight** — call `markPendingSync(localId)` to flip the flag, then schedule WorkManager
+5. **Offline path** — insert with `pendingSync=true`, schedule WorkManager
+6. **WorkManager on iOS** — wrapped in try/catch because iOS requires `BGTaskSchedulerPermittedIdentifiers` in `Info.plist`. The user is already saved locally so nothing is lost.
+
+---
+
+### Users Page — `features/users/ui/users_page.dart`
+
+Two providers watched simultaneously:
+- `usersStreamProvider` — the live DB list
+- `usersNotifierProvider` — its `isLoading` state drives the shimmer
+
+Shimmer is shown when `isFetching && users.isEmpty` — meaning the network fetch is in flight AND the DB has no cached data yet. On subsequent launches the cached list appears instantly.
+
+Animations use `key: ValueKey('anim_${item.user.id}')` on `.animate()` — this ties the animation lifecycle to the item's identity so `fadeIn` only plays once per item, not every time it scrolls into view.
+
+The stagger delay is capped at `(index % 20) * 50ms` so items beyond position 20 don't wait over a second to appear.
+
+---
+
+### Add User Page — `features/add_user/ui/add_user_page.dart`
+
+A standard `ConsumerStatefulWidget` form with two `TextEditingController`s. Uses `ref.listen` to react to state changes — on success it shows a snackbar and pops; on error it shows an error snackbar. The `PrimaryButton` shows a spinner while `state.isLoading` is true.
+
+---
+
+## Phase 5 — Movies Page & Movie Detail
+
+The goal of Phase 5 is to fetch trending movies, cache them, let users save/unsave them, and navigate to a detail page with a Hero animation.
+
+---
+
+### Movie Model — `features/movies/data/models/movie_model.dart`
+
+Freezes `MovieModel` with `@JsonKey` for `poster_path`, `release_date`. `MoviesPageResponse` wraps the TMDB paginated response with `page`, `totalPages`, `results`.
+
+---
+
+### TMDB API — `features/movies/data/movies_api.dart`
+
+- `fetchTrending(page)` — GET `/trending/movie/day?language=en-US&page=X`
+- `fetchDetail(tmdbId)` — GET `/movie/:id`
+
+The `api_key` query param is attached globally in `tmdbDioProvider`'s `BaseOptions.queryParameters` — individual API calls don't need to include it.
+
+---
+
+### OMDB API — `features/movies/data/omdb_api.dart`
+
+OMDB has no trending endpoint, so `fetchPopular(page)` cycles through a list of 20 curated search terms (one per page) and fetches the first 5 detail results for each. This simulates pagination.
+
+OMDB's `imdbID` field (e.g. `tt1234567`) is stripped of non-numeric characters and used as the movie's `id`. Poster URLs from OMDB are full `https://` URLs — `AppNetworkImage` handles them identically to TMDB paths.
+
+---
+
+### Movies Repository — `features/movies/data/movies_repository.dart`
+
+Three-layer fallback chain for `fetchTrending`:
+1. Try TMDB → on success, cache and return
+2. On any `DioException` → try OMDB fallback
+3. OMDB also fails → return `Failure(NetworkFailure())`
+
+For `fetchDetail`:
+1. Try TMDB detail
+2. Try OMDB by constructing an imdbID from the tmdbId (`tt` + zero-padded number)
+3. Serve from local DB cache if both APIs are down
+
+`toggleSave` resolves the `tmdbId` → local `id` via `getMovieByTmdbId`, then delegates to `SavedMoviesDao`.
+
+`watchSaveCount` is an `async*` generator — it first awaits the DB lookup, then yields from the stream. This avoids the stream emitting before the movie row exists.
+
+---
+
+### Movies Notifier — `features/movies/logic/movies_provider.dart`
+
+The notifier state is a Dart record `({List<MovieModel> movies, String? error})` — both the list and any error live in the same `AsyncValue`. This avoids the Riverpod rule violation that occurs when one provider tries to write to another provider during `build()`.
+
+- `build()` — loads page 1, returns the initial `MoviesState`
+- `loadMore()` — appends to the existing list, sets `AsyncData` directly
+- `refresh()` — sets `AsyncLoading` then `AsyncData` without calling `invalidateSelf()`, preventing a `build()` re-trigger
+
+Error is only surfaced (`error != null`) when the movie list is empty — if there are cached movies, the error is swallowed silently so the user sees their cached data instead of an error screen.
+
+Derived providers:
+- `moviesListProvider` — reads `valueOrNull?.movies ?? []`
+- `moviesErrorProvider` — reads `valueOrNull?.error`
+- `saveCountProvider(tmdbId)` — `StreamProvider.family` watching save count per movie
+- `isSavedProvider((userId, tmdbId))` — `FutureProvider.family` using a record tuple as the key
+- `movieSaversProvider(tmdbId)` — `FutureProvider.family` for the detail page savers row
+
+---
+
+### Movie Card — `features/movies/ui/widgets/movie_card.dart`
+
+The poster is wrapped in a `Hero` with tag `movie_poster_${movie.id}` — this matches the tag in `MovieDetailPage` to produce the expand/shrink transition.
+
+`SaveCountBadge` uses `AnimatedSwitcher` with a `ScaleTransition` — when the count changes, the old badge scales down and the new one scales up. The `ValueKey(count)` on the inner container is what triggers the switcher.
+
+---
+
+### Movie Detail Page — `features/movie_detail/ui/movie_detail_page.dart`
+
+Uses an inline `FutureProvider` inside `ref.watch` to fetch the detail — the `Result` is unwrapped inside the provider so `FutureBuilder` receives a `MovieModel` directly.
+
+The `SliverAppBar` with `expandedHeight: 340` and `pinned: true` keeps the title visible while scrolling. The `Hero` widget wraps the background image — Flutter matches it to the card's Hero by tag and animates between them.
+
+`_SaversRow` watches `movieSaversProvider(tmdbId)` and shows up to 5 avatar circles plus a count label.
+
+---
+
+## Phase 6 — Saved Movies & Matches Pages
+
+The goal of Phase 6 is to build two purely local pages — no API calls, everything driven by DB streams that update in real time as saves happen.
+
+---
+
+### Saved Movies Provider — `features/saved_movies/logic/saved_movies_provider.dart`
+
+A single `StreamProvider.family<List<MoviesTableData>, int>` keyed by `userId`. It delegates directly to `SavedMoviesDao.watchSavedMoviesForUser(userId)` — a Drift stream that re-emits whenever any row in `saved_movies` changes for that user.
+
+Because it's a `family`, each user gets their own independent stream. Navigating to User A's saved page and User B's saved page simultaneously would create two separate stream subscriptions.
+
+---
+
+### Matches Provider — `features/matches/logic/matches_provider.dart`
+
+Two providers:
+
+- `matchesProvider` — delegates to `SavedMoviesDao.watchMatches()`, which returns movies saved by 2+ users ordered by saver count descending. Updates in real time.
+- `totalUsersCountProvider` — maps the users stream to just its length. Used by `MatchesPage` to determine the Top Pick threshold.
+
+---
+
+### Saved Movies Page — `features/saved_movies/ui/saved_movies_page.dart`
+
+Watches `savedMoviesProvider(userId)`. Each row shows the poster, title, year, and a filled bookmark icon. Tapping the bookmark calls `moviesRepository.toggleSave(userId, movie.tmdbId)` — the DB stream immediately removes the row from the list without any manual state management.
+
+The empty state includes a "Browse Movies" `TextButton` that pushes `RouteNames.movies(userId)` — keeping the user in context of which user they're browsing for.
+
+Poster URLs use `ApiConstants.tmdbImageSmall` prefix — OMDB movies store full URLs in `posterPath` so the prefix is harmless (the full URL still resolves correctly).
+
+---
+
+### Matches Page — `features/matches/ui/matches_page.dart`
+
+Watches both `matchesProvider` and `totalUsersCountProvider`. The Top Pick condition is:
+
+```dart
+final isTopPick = totalUsers > 1 && match.saverCount >= totalUsers;
+```
+
+This means every user in the app has saved that movie. `totalUsers > 1` prevents a single user from triggering Top Pick on their own saves.
+
+The page makes zero API calls — it's entirely driven by the local DB. Adding a new save on the Movies page will cause this page to update instantly if it's open in the navigation stack.
+
+---
+
+### Match Movie Tile — `features/matches/ui/widgets/match_movie_tile.dart`
+
+Shows poster, title, saver count row, and conditionally the Top Pick badge. The badge uses `AppColors.secondary` (green) with a fire icon to visually distinguish it from the primary blue used elsewhere. The poster is wrapped in a `Hero` with tag `match_poster_${movie.tmdbId}` for a smooth transition if tapped.
+
+---
+
+### Navigation — `UserListTile` save count badge
+
+The save count badge on each user tile is now wrapped in a `GestureDetector` that pushes `RouteNames.savedMovies(user.id)`. This gives a direct path from the users list to any user's saved movies without going through the movies page first.
+
+---
+
+## What's Next
+
 | Phase | What it adds |
 |---|---|
-| **Phase 3** | Dio HTTP clients with retry interceptor and auth headers |
-| **Phase 4** | Users page (infinite scroll, shimmer) + Add User form (online/offline) |
-| **Phase 5** | Movies page + Movie Detail with Hero animation |
-| **Phase 6** | Saved Movies page + Matches page (stream-driven, no API) |
 | **Phase 7** | WorkManager background sync for offline-created users |
-| **Phase 8** | Shimmer loaders, staggered animations, animated badge |
-| **Phase 9** | ReconnectingBar wired to retry interceptor |
+| **Phase 8** | UI polish — shimmer, staggered animations, Hero, animated badge |
+| **Phase 9** | ReconnectingBar + retry interceptor fully wired |
 | **Phase 10** | Release build + README |

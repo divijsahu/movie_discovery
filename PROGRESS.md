@@ -20,67 +20,64 @@ After each phase:
 - [x] Renamed package to `movie_discovery`, updated Android `applicationId`
 - [x] Replaced `pubspec.yaml` with all plan dependencies (Riverpod, GoRouter, Dio, Drift, WorkManager, Connectivity, Freezed, Shimmer, flutter_animate, etc.)
 - [x] Created full folder structure matching the plan
-- [x] `main.dart` — ProviderScope + WidgetsFlutterBinding
+- [x] `main.dart` — ProviderScope + WidgetsFlutterBinding + WorkManager init
 - [x] `app.dart` — MaterialApp.router with GoRouter + light/dark theme
-- [x] `core/router/` — `app_router.dart` (placeholder route), `route_names.dart`
+- [x] `core/router/` — `app_router.dart`, `route_names.dart`
 - [x] `core/error/` — `failures.dart` (sealed, with `fromDio`), `result.dart`
-- [x] `core/network/api_constants.dart` — Reqres + TMDB constants
+- [x] `core/network/api_constants.dart` — Reqres + TMDB + OMDB constants
 - [x] `core/utils/connectivity_service.dart` — stream + future providers
 - [x] `core/utils/validators.dart`
 - [x] `core/utils/extensions/context_ext.dart`
 - [x] `core/sync/sync_worker.dart` — WorkManager stub
 - [x] `design_system/` — colors, text styles, spacing, radius, theme
 - [x] `design_system/widgets/` — PrimaryButton, ShimmerBox, EmptyState, ReconnectingBar, AppNetworkImage, AppCard
-- [x] Removed all old `flutter_app_template` files
-- [x] `flutter analyze` → No issues found
 
 ### Your Checks
 - [x] `flutter pub get` — resolves cleanly
 - [x] `flutter analyze` — no errors
-- [ ] `flutter run` — app boots, console shows:
+- [x] `flutter run` — app boots, console shows:
   ```
   🎬 [App] initialising...
   🔄 [App] WorkManager ready
   🚀 [App] launching
   ```
-- [ ] Screen shows placeholder "Users" text centered on white background
-- [ ] No red error screen, no exceptions in console
+- [x] Screen shows placeholder "Users" text centered on white background
+- [x] No red error screen, no exceptions in console
+
 ---
 
 ## Phase 2 — Database Schema (Drift)
 
 ### Dev Completed
 - [x] `app_database.dart` — UsersTable, MoviesTable, SavedMoviesTable
-- [x] `users_dao.dart` — watchAllUsersWithCount, insert, upsert, pending sync queries
+- [x] `users_dao.dart` — watchAllUsersWithCount, insert, upsert, pending sync queries, markPendingSync
 - [x] `movies_dao.dart` — upsertMovie, getByTmdbId, getByIds
 - [x] `saved_movies_dao.dart` — watchSaved, watchSaveCount, watchMatches, save/unsave, getUsersWhoSaved
 - [x] `app_database.g.dart` — generated via build_runner
 - [x] Database provider wired into Riverpod
+- [x] Schema v2 migration — deduplicates remote users by serverId
 
 ### Your Checks
 - [x] `dart run build_runner build --delete-conflicting-outputs` — no errors
 - [x] `flutter analyze` — no errors
-- [ ] `flutter run` — app still boots, no crash, same placeholder screen as Phase 1
-- [ ] No migration errors in console (schema version 1, fresh install)
+- [x] `flutter run` — app still boots, no crash
+- [x] No migration errors in console (schema version 2)
 
 ---
 
 ## Phase 3 — Networking Layer
 
 ### Dev Completed
-- [x] `retry_interceptor.dart` — exponential backoff, retries on 5xx + connection errors
+- [x] `retry_interceptor.dart` — exponential backoff, retries on 5xx + connection errors, skips POST/PATCH/PUT
 - [x] `auth_interceptor.dart` — Reqres API key header
-- [x] `dio_client.dart` — two Dio instances (reqresDio, tmdbDio) as keepAlive Riverpod providers
-- [x] `connectivity_service.dart` — finalized stream + isOnline providers
+- [x] `logging_interceptor.dart` — structured ┌─/└─ logs with timing, response summaries, api keys hidden
+- [x] `dio_client.dart` — reqresDio, tmdbDio, omdbDio as Riverpod providers
+- [x] `connectivity_service.dart` — stream + isOnline providers
 
 ### Your Checks
 - [x] `flutter analyze` — no errors
-- [ ] `flutter run` — app boots, console shows:
-  ```
-  🌐 GET → /users?page=1   (before API key was set, showed 403)
-  └─ ❌ GET /users?page=1 → 403 badResponse
-  ```
-- [ ] After setting real API key: `└─ ✅ GET /users?page=1 → 200  (Xms)`
+- [x] `flutter run` — console shows structured request/response logs
+- [x] Real API key set — `└─ ✅ GET /users?page=1 → 200  (Xms)`
 
 ---
 
@@ -91,61 +88,24 @@ After each phase:
 - [x] `users_api.dart` — fetchUsers (paginated), createUser
 - [x] `users_repository.dart` — watchUsers stream, fetchAndCachePage
 - [x] `users_provider.dart` — infinite scroll, loadMore, refresh
-- [x] `users_page.dart` — list with shimmer, infinite scroll, staggered animations
-- [x] `user_list_tile.dart` — avatar, name, save count badge
+- [x] `users_page.dart` — list with shimmer, infinite scroll, staggered animations (keyed by ID)
+- [x] `user_list_tile.dart` — avatar, name, save count badge (tappable → saved movies), pending sync icon
 - [x] `add_user_page.dart` — form with name + movie taste fields
-- [x] `add_user_provider.dart` — online/offline handling, WorkManager scheduling
-- [x] GoRouter routes wired: `/` (users), `/add-user`, `/matches`
+- [x] `add_user_provider.dart` — online/offline handling, WorkManager scheduling with iOS graceful fallback
+- [x] GoRouter routes wired: `/` (users), `/add-user`
+- [x] Fix: upsertRemoteUser checks serverId before insert — no duplicate rows on restart
+- [x] Fix: animation keyed by item ID — no blank tiles on scroll up
 
 ### Your Checks
 - [x] `flutter analyze` — no errors
-- [x] **App start** — console shows full startup + first fetch sequence:
-  ```
-  🎬 [App] initialising...
-  🔄 [App] WorkManager ready
-  🚀 [App] launching
-
-  🚀 [App] starting up — loading users page 1
-  👥 [Users] fetching page 1 from Reqres...
-  ┌─ 🌐 GET → /users?page=1
-  └─ ✅ GET /users?page=1 → 200  (312ms)
-     📋 6 users  (page 1 of 2)
-  💾 [Users] cached 6 users to DB  (page 1/2)
-  📊 [Users] page 1/2 loaded — 6 users
-  ```
-- [ ] **Users list visible** — 6 avatars with names and email subtitles animate in with stagger
-- [ ] **Shimmer** — briefly visible before first data arrives on a slow connection
-- [ ] **Infinite scroll** — scroll to bottom, console shows:
-  ```
-  🔽 [Users] loading more — page 2/2
-  👥 [Users] fetching page 2 from Reqres...
-  └─ ✅ GET /users?page=2 → 200  (Xms)
-  💾 [Users] cached 6 users to DB  (page 2/2)
-  📊 [Users] page 2/2 loaded — 6 users
-  ```
-  Total 12 users now visible in list
-- [ ] **Pull-to-refresh** — swipe down, console shows `🔄 [Users] pull-to-refresh triggered`, list reloads
-- [ ] **Add User (online)** — tap FAB, fill Name + Movie Taste, submit. Console shows:
-  ```
-  👤 [AddUser] submitting "Alex" — online: true
-  💾 [AddUser] saved locally  (localId=X, pendingSync=false)
-  ┌─ 🌐 POST → /users
-  └─ ✅ POST /users → 201  (Xms)
-     👤 created user id=... name=Alex
-  ☁️  [AddUser] synced to Reqres  (serverId=...)
-  ✅ [AddUser] done
-  ```
-  New user appears at top of list immediately
-- [ ] **Add User (offline)** — enable airplane mode, add another user. Console shows:
-  ```
-  👤 [AddUser] submitting "Sam" — online: false
-  💾 [AddUser] saved locally  (localId=X, pendingSync=true)
-  📵 [AddUser] offline — WorkManager task queued for localId=X
-  ✅ [AddUser] done
-  ```
-  User appears in list with a `⟳` sync icon next to their name
-- [ ] **Pending sync icon** — offline-created user shows small sync icon in tile
-- [ ] **ReconnectingBar** — enable airplane mode, orange banner appears at top of Users page
+- [x] **App start** — console shows full startup + first fetch sequence
+- [x] **Users list visible** — avatars with names animate in with stagger
+- [x] **No duplicates** — same 6 Reqres users shown on every restart
+- [x] **Infinite scroll** — scroll to bottom loads page 2
+- [x] **Pull-to-refresh** — swipe down reloads list
+- [x] **Add User (online)** — appears at top of list, synced to Reqres
+- [x] **Add User (offline)** — appears locally with `⟳` sync icon
+- [x] **ReconnectingBar** — orange banner on airplane mode
 
 ---
 
@@ -154,56 +114,51 @@ After each phase:
 ### Dev Completed
 - [x] `movie_model.dart` — Freezed model
 - [x] `movies_api.dart` — fetchTrending (paginated), fetchDetail
-- [x] `movies_repository.dart` — fetchTrending + cache, fetchDetail, toggleSave, watchSaveCount, isSaved, getUsersWhoSaved
-- [x] `movies_provider.dart` — infinite scroll, saveCountProvider, isSavedProvider, movieSaversProvider
-- [x] `movies_page.dart` — list with shimmer, staggered animations, infinite scroll
+- [x] `omdb_api.dart` — OMDB fallback with curated search terms, maps to MovieModel
+- [x] `movies_repository.dart` — TMDB first → OMDB fallback → DB cache chain for both trending and detail
+- [x] `movies_provider.dart` — MoviesState record (movies + error), infinite scroll, error surfaced only when list empty
+- [x] `movies_page.dart` — shimmer, staggered animations, infinite scroll, accurate error state with Retry button
 - [x] `movie_card.dart` — poster Hero, title, animated save count badge, save button
 - [x] `save_count_badge.dart` — AnimatedSwitcher scale transition
-- [x] `movie_detail_page.dart` — SliverAppBar, Hero animation, SaversRow, shimmer
+- [x] `movie_detail_page.dart` — SliverAppBar, Hero animation, SaversRow, shimmer, DB cache fallback
 - [x] `movie_list_shimmer.dart` — skeleton loader
 - [x] GoRouter routes wired: `/users/:userId/movies`, `/movies/:tmdbId?userId=`
+- [x] Fix: POST not retried by RetryInterceptor (prevents duplicate mutations)
+- [x] Fix: error state shows actual API message, not hardcoded text
 
 ### Your Checks
-- [ ] `flutter analyze` — no errors
-- [ ] **Movies page** — tap any user → movies page loads, console shows:
-  ```
-  🎬 [Movies] fetching page 1 from TMDB...
-  ┌─ 🌐 GET → /trending/movie/day?page=1
-  └─ ✅ GET /trending/movie/day?page=1 → 200  (Xms)
-     🎬 20 movies  (page 1 of X)
-  💾 [Movies] cached 20 movies to DB
-  ```
-- [ ] Movie posters load with cached images (no broken image icons)
-- [ ] **Save a movie** — tap bookmark on a movie card:
-  - Badge animates from 0 → 1
-  - Tap again → badge animates back to 0
-- [ ] **Infinite scroll** — scroll to bottom of movies list, next page loads
-- [ ] **Tap a movie card** — Hero animation plays, detail page opens
-- [ ] **Detail page** — poster expands in SliverAppBar, overview text visible
-- [ ] **Savers row** — after saving a movie as 1+ users, avatars appear on detail page with "X users want to watch this"
+- [x] `flutter analyze` — no errors
+- [x] **Movies page** — loads trending movies from TMDB (or OMDB fallback)
+- [x] **Error state** — TMDB down shows "Could not load movies" + actual error + Retry button
+- [x] **Save a movie** — badge animates 0 → 1, tap again → 0
+- [x] **Infinite scroll** — next page loads on scroll
+- [x] **Hero animation** — tap card → poster expands into detail page
+- [x] **Detail page** — overview visible, savers row shows avatars
 
 ---
 
 ## Phase 6 — Saved Movies & Matches Pages
 
 ### Dev Completed
-- [ ] `saved_movies_page.dart` — stream from DB, empty state with CTA
-- [ ] `saved_movies_provider.dart`
-- [ ] `matches_page.dart` — stream-driven, real-time updates
-- [ ] `matches_provider.dart` — watchMatches from DB
-- [ ] `match_movie_tile.dart` — "Top Pick" badge when all users saved
-- [ ] GoRouter routes wired: `/users/:userId/saved`, `/matches`
+- [x] `saved_movies_provider.dart` — StreamProvider.family watching DB per userId
+- [x] `saved_movies_page.dart` — stream from DB, empty state with Browse CTA, staggered animations, unsave from list
+- [x] `matches_provider.dart` — watchMatches stream + totalUsersCount stream
+- [x] `matches_page.dart` — stream-driven real-time updates, Top Pick badge, staggered animations
+- [x] `match_movie_tile.dart` — poster, saver count, Top Pick badge (🔥 green)
+- [x] GoRouter routes wired: `/users/:userId/saved`, `/matches`
+- [x] UserListTile save count badge is now tappable → navigates to saved movies page
 
 ### Your Checks
 - [ ] `flutter analyze` — no errors
-- [ ] **Saved Movies page** — tap a user → tap "Saved" → page shows only movies that user bookmarked
-- [ ] **Empty state** — user with no saves sees empty state with "Browse Movies" CTA button
-- [ ] **Save a movie then check** — go to movies, save one, go back to saved → it appears immediately (stream update, no refresh needed)
-- [ ] **Matches page** — tap Matches in AppBar:
-  - Empty state shown when fewer than 2 users saved any common movie
-  - Save the same movie as 2 different users → movie appears in Matches instantly
-- [ ] **Saver count** — matches list shows how many users saved each movie
-- [ ] **Top Pick badge** — save the same movie as ALL users → "Top Pick" badge appears on that tile
+- [ ] **Saved Movies page** — tap save count badge on a user → page shows only that user's bookmarked movies
+- [ ] **Empty state** — user with no saves sees empty state with "Browse Movies" button that navigates to their movies page
+- [ ] **Real-time update** — save a movie → go back to saved → it appears instantly (no refresh needed)
+- [ ] **Unsave from list** — tap bookmark icon on saved movies page → movie disappears immediately
+- [ ] **Matches page** — tap 🔥 Matches in AppBar:
+  - Empty state when no common saves yet
+  - Save same movie as 2 different users → appears in Matches instantly
+- [ ] **Saver count** — each match tile shows "X people want to watch"
+- [ ] **Top Pick badge** — save same movie as ALL users → 🔥 Top Pick badge appears
 
 ---
 
@@ -286,12 +241,12 @@ After each phase:
 
 | Phase | Status | Your Sign-off |
 |-------|--------|---------------|
-| 1 — Setup & Architecture | ✅ Complete | ⬜ Pending |
-| 2 — Database Schema | ✅ Complete | ⬜ Pending |
-| 3 — Networking Layer | ✅ Complete | ⬜ Pending |
-| 4 — Users Page & Add User | ✅ Complete | ⬜ Pending |
-| 5 — Movies Page & Detail | ✅ Complete | ⬜ Pending |
-| 6 — Saved Movies & Matches | ⬜ Not started | ⬜ Pending |
+| 1 — Setup & Architecture | ✅ Complete | ✅ Verified |
+| 2 — Database Schema | ✅ Complete | ✅ Verified |
+| 3 — Networking Layer | ✅ Complete | ✅ Verified |
+| 4 — Users Page & Add User | ✅ Complete | ✅ Verified |
+| 5 — Movies Page & Detail | ✅ Complete | ✅ Verified |
+| 6 — Saved Movies & Matches | ✅ Complete | ⬜ Pending |
 | 7 — Offline Sync | ⬜ Not started | ⬜ Pending |
 | 8 — UI Polish | ⬜ Not started | ⬜ Pending |
 | 9 — Bad Connection Handling | ⬜ Not started | ⬜ Pending |
