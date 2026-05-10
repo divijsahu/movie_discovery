@@ -46,16 +46,16 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 ## Phase 2 — Database Schema (Drift)
 
 ### Dev Completed
-- [ ] `app_database.dart` — UsersTable, MoviesTable, SavedMoviesTable
-- [ ] `users_dao.dart` — watchAllUsersWithCount, insert, upsert, pending sync queries
-- [ ] `movies_dao.dart` — upsertMovie, getByTmdbId, getByIds
-- [ ] `saved_movies_dao.dart` — watchSaved, watchSaveCount, watchMatches, save/unsave, getUsersWhoSaved
-- [ ] `app_database.g.dart` — generated via build_runner
-- [ ] Database provider wired into Riverpod
+- [x] `app_database.dart` — UsersTable, MoviesTable, SavedMoviesTable
+- [x] `users_dao.dart` — watchAllUsersWithCount, insert, upsert, pending sync queries
+- [x] `movies_dao.dart` — upsertMovie, getByTmdbId, getByIds
+- [x] `saved_movies_dao.dart` — watchSaved, watchSaveCount, watchMatches, save/unsave, getUsersWhoSaved
+- [x] `app_database.g.dart` — generated via build_runner
+- [x] Database provider wired into Riverpod
 
 ### Your Checks
-- [ ] `dart run build_runner build --delete-conflicting-outputs` — no errors
-- [ ] `flutter analyze` — no errors
+- [x] `dart run build_runner build --delete-conflicting-outputs` — no errors
+- [x] `flutter analyze` — no errors
 - [ ] `flutter run` — app still boots cleanly
 
 ---
@@ -205,7 +205,7 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 | Phase | Status | Your Sign-off |
 |-------|--------|---------------|
 | 1 — Setup & Architecture | ✅ Complete | ⬜ Pending |
-| 2 — Database Schema | ⬜ Not started | ⬜ Pending |
+| 2 — Database Schema | ✅ Complete | ⬜ Pending |
 | 3 — Networking Layer | ⬜ Not started | ⬜ Pending |
 | 4 — Users Page & Add User | ⬜ Not started | ⬜ Pending |
 | 5 — Movies Page & Detail | ⬜ Not started | ⬜ Pending |
