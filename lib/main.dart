@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,21 @@ void main() async {
   if (kDebugMode) print('\n🎬 [App] initialising...');
   await SyncWorker.initialize();
   if (kDebugMode) print('🔄 [App] WorkManager ready');
+  await _syncOnLaunch();
   if (kDebugMode) print('🚀 [App] launching\n');
   runApp(const ProviderScope(child: App()));
+}
+
+Future<void> _syncOnLaunch() async {
+  try {
+    final results = await Connectivity().checkConnectivity();
+    final isOnline = results.any((r) => r != ConnectivityResult.none);
+    if (!isOnline) {
+      if (kDebugMode) print('📵 [App] offline — skipping launch sync');
+      return;
+    }
+    await runPendingUserSync();
+  } catch (e) {
+    if (kDebugMode) print('⚠️  [App] launch sync error: $e');
+  }
 }

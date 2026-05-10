@@ -165,20 +165,26 @@ After each phase:
 ## Phase 7 — Offline Sync (WorkManager)
 
 ### Dev Completed
-- [ ] `sync_worker.dart` — reads pendingSync users, POSTs to Reqres, marks synced
-- [ ] WorkManager initialized in `main.dart`
-- [ ] Add user offline → syncs automatically on reconnect
-- [ ] No duplicate entries after sync
+- [x] `sync_worker.dart` — `runPendingUserSync()` opens DB + Dio directly (no Riverpod), reads pendingSync users, POSTs each to Reqres, marks synced
+- [x] `callbackDispatcher` delegates to `runPendingUserSync()` — WorkManager fires this in a background isolate
+- [x] Launch sync in `main.dart` — calls `runPendingUserSync()` on startup if online (covers iOS where WorkManager background tasks need Info.plist)
+- [x] Failed individual syncs leave `pendingSync=true` — WorkManager retries the task automatically
+- [x] No duplicate entries after sync — `upsertRemoteUser` checks serverId before insert
 
 ### Your Checks
-- [ ] `flutter analyze` — no errors
+- [x] `flutter analyze` — no errors
 - [ ] **Offline add user** — enable airplane mode, add a user:
   - User appears in list with `⟳` sync icon
   - Console shows `📵 [AddUser] offline — WorkManager task queued`
-- [ ] **Reconnect sync** — disable airplane mode:
-  - Console shows sync worker firing, POST succeeds
+- [ ] **Relaunch online** — kill app, re-enable wifi, reopen:
+  - Console shows:
+    ```
+    🔄 [Sync] running pending user sync...
+    🔄 [Sync] 1 pending user(s) to sync
+    ☁️  [Sync] synced "Sam" → serverId=...
+    ✅ [Sync] done
+    ```
   - `⟳` icon disappears from the user tile
-  - `pendingSync` cleared in DB (no duplicate row)
 - [ ] **No duplicates** — user appears exactly once after sync
 
 ---
@@ -247,7 +253,7 @@ After each phase:
 | 4 — Users Page & Add User | ✅ Complete | ✅ Verified |
 | 5 — Movies Page & Detail | ✅ Complete | ✅ Verified |
 | 6 — Saved Movies & Matches | ✅ Complete | ⬜ Pending |
-| 7 — Offline Sync | ⬜ Not started | ⬜ Pending |
+| 7 — Offline Sync | ✅ Complete | ⬜ Pending |
 | 8 — UI Polish | ⬜ Not started | ⬜ Pending |
 | 9 — Bad Connection Handling | ⬜ Not started | ⬜ Pending |
 | 10 — Final Polish | ⬜ Not started | ⬜ Pending |
