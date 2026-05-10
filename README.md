@@ -1,355 +1,177 @@
-# 🚀 Flutter App Template - 2026 Enterprise Architecture
+# 🎬 Movie Discovery
 
-[![Flutter Version](https://img.shields.io/badge/Flutter-3.4.4+-blue.svg)](https://flutter.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/divijsahu/flutter-app-template/pulls)
+A production-quality Flutter app built for the Platform Commons Engineering Assignment (2026).
 
-A production-ready Flutter app template following 2026 enterprise architecture principles with clean code, modular design system, and scalable structure. Perfect for starting new projects or learning best practices.
-
-## ✨ Features
-
-- 🏗️ **Clean Architecture** - Domain-driven design with clear separation of concerns
-- 🎨 **Design System** - Token-based design with atoms, molecules, and organisms
-- 📱 **Responsive** - Mobile, tablet, and desktop layouts out of the box
-- 🎯 **Type-Safe** - Result types for robust error handling
-- ⚡ **Performance** - Optimized with Flutter best practices
-- 🧪 **Testable** - Every layer independently testable
-- 📚 **Well Documented** - Comprehensive guides and examples
-- 🔧 **Production Ready** - Battle-tested architecture patterns
-
-## 🎯 Who Is This For?
-
-- **Startups** building scalable Flutter apps
-- **Enterprise teams** needing maintainable architecture
-- **Solo developers** wanting best practices
-- **Students** learning Flutter architecture
-- **Teams** requiring consistent code structure
-
-## 📁 Project Structure
-
-```
-lib/
-├── core/                      # Core infrastructure
-│   ├── base/                  # Base classes (UseCase, etc.)
-│   ├── errors/                # Failure types
-│   ├── network/               # Result type, network utilities
-│   └── constants/             # App-wide constants
-│
-├── design_system/             # Design tokens & components
-│   ├── tokens/                # Colors, typography, spacing, breakpoints
-│   ├── theme/                 # Theme configuration
-│   ├── atoms/                 # Basic UI components (buttons, inputs)
-│   ├── molecules/             # Composite components
-│   ├── organisms/             # Complex components
-│   └── layouts/               # Layout components (responsive)
-│
-├── shared/                    # Shared across features
-│   ├── extensions/            # Context, String extensions
-│   ├── helpers/               # Snackbar, dialog helpers
-│   └── widgets/               # Reusable widgets
-│
-├── features/                  # Feature modules
-│   └── home/
-│       ├── data/              # Data sources, DTOs, repositories
-│       ├── domain/            # Entities, use cases, contracts
-│       └── presentation/      # Screens, widgets, providers
-│
-└── app/                       # App configuration
-    └── app.dart               # Root app widget
-```
-
-## 🚀 Quick Start
-
-### 1. Use This Template
-
-Click the **"Use this template"** button at the top of this repository, or:
-
-```bash
-# Clone the repository
-git clone https://github.com/divijsahu/flutter-app-template.git your-app-name
-cd your-app-name
-
-# Remove git history and start fresh
-rm -rf .git
-git init
-git add .
-git commit -m "Initial commit from template"
-```
-
-### 2. Setup Your Project
-
-```bash
-# Install dependencies
-flutter pub get
-
-# Run the app
-flutter run
-
-# Run tests
-flutter test
-
-# Check for issues
-flutter analyze
-```
-
-### 3. Customize
-
-1. **Update app name** in `pubspec.yaml`
-2. **Change package name**: `flutter pub run change_app_package_name:main com.yourcompany.yourapp`
-3. **Update constants** in `lib/core/constants/app_constants.dart`
-4. **Customize theme** in `lib/design_system/tokens/`
-5. **Add your features** in `lib/features/`
-
-## 📖 Documentation
-
-### Quick Guides
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - Detailed architecture breakdown
-- **[Design System Guide](docs/DESIGN_SYSTEM.md)** - Using design tokens and components
-- **[Feature Development](docs/FEATURE_DEVELOPMENT.md)** - Adding new features
-- **[Testing Guide](docs/TESTING.md)** - Writing tests
-
-### Reference
-- **[Enterprise Architecture](docs/ENTERPRISE_ARCHITECTURE.md)** - Full enterprise patterns
-- **[Best Practices](docs/BEST_PRACTICES.md)** - Coding standards and conventions
-
-## 🎨 Design System Usage
-
-### Using Design Tokens
-
-```dart
-// Colors
-Container(color: AppColors.primary)
-
-// Spacing
-Padding(padding: AppSpacing.pagePadding)
-
-// Typography
-Text('Hello', style: AppTypography.headlineMedium)
-
-// Breakpoints
-if (MediaQuery.of(context).size.width >= AppBreakpoints.tablet) {
-  // Tablet layout
-}
-```
-
-### Using Components
-
-```dart
-// Primary Button
-PrimaryButton(
-  label: 'Submit',
-  onPressed: () {},
-  isLoading: false,
-)
-
-// Responsive Layout
-ResponsiveLayout(
-  mobile: MobileWidget(),
-  tablet: TabletWidget(),
-  desktop: DesktopWidget(),
-)
-```
-
-### Using Context Extensions
-
-```dart
-// Access theme
-context.colors.primary
-context.textTheme.bodyLarge
-
-// Check device type
-if (context.isMobile) { }
-if (context.isTablet) { }
-if (context.isDesktop) { }
-```
-
-## 🏗️ Architecture Principles
-
-### 1. Feature Isolation
-Each feature is self-contained with its own data, domain, and presentation layers.
-
-### 2. Dependency Rule
-```
-Presentation → Domain ← Data
-```
-Domain knows nothing about other layers.
-
-### 3. Result Type
-Use `Result<T>` for error handling:
-```dart
-Future<Result<User>> login(String email, String password) async {
-  try {
-    final user = await api.login(email, password);
-    return Success(user);
-  } catch (e) {
-    return Failure(NetworkFailure());
-  }
-}
-```
-
-### 4. Use Cases
-Business logic lives in use cases:
-```dart
-class LoginUseCase extends BaseUseCase<User, LoginParams> {
-  @override
-  Future<Result<User>> execute(LoginParams params) {
-    // Business logic here
-  }
-}
-```
-
-## 🔧 Adding a New Feature
-
-```bash
-# Create feature structure
-mkdir -p lib/features/your_feature/{data,domain,presentation}/{datasources,models,repositories,entities,usecases,screens,widgets,providers}
-```
-
-Follow the clean architecture pattern:
-1. **Domain**: Define entities and use cases
-2. **Data**: Implement repositories and data sources
-3. **Presentation**: Build UI with screens and widgets
-
-See [Feature Development Guide](docs/FEATURE_DEVELOPMENT.md) for detailed steps.
-
-## 📦 Recommended Packages
-
-```yaml
-dependencies:
-  # State Management
-  flutter_riverpod: ^2.5.0
-  
-  # Networking
-  dio: ^5.4.0
-  
-  # Local Storage
-  shared_preferences: ^2.2.0
-  hive_flutter: ^1.1.0
-  
-  # Routing
-  go_router: ^13.0.0
-  
-  # Code Generation
-  freezed: ^2.4.0
-  json_serializable: ^6.7.0
-```
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-flutter test
-
-# Run with coverage
-flutter test --coverage
-
-# Generate coverage report
-genhtml coverage/lcov.info -o coverage/html
-open coverage/html/index.html
-```
-
-## 📝 Best Practices
-
-### DO ✅
-- Use design tokens for all visual properties
-- Follow clean architecture layers
-- Use Result type for error handling
-- Keep features isolated
-- Use context extensions for common operations
-- Make layouts responsive
-- Write tests for business logic
-
-### DON'T ❌
-- Hardcode colors, spacing, or text
-- Import from other features
-- Throw exceptions in repositories
-- Skip error handling
-- Assume screen size
-- Put business logic in widgets
-- Repeat code across features
-
-## 🌟 What's Included
-
-### Core Infrastructure
-- ✅ Base classes for UseCase and Repository
-- ✅ Result type for error handling
-- ✅ Failure types (Network, Server, Validation, etc.)
-- ✅ App constants and configuration
-
-### Design System
-- ✅ Design tokens (colors, typography, spacing, breakpoints)
-- ✅ Light and dark themes
-- ✅ Atomic components (buttons, inputs, text)
-- ✅ Responsive layouts
-- ✅ Context extensions
-
-### Example Feature
-- ✅ Home feature with clean architecture
-- ✅ Responsive home screen
-- ✅ Example of proper layer separation
-
-### Documentation
-- ✅ Architecture guide
-- ✅ Design system guide
-- ✅ Feature development guide
-- ✅ Testing guide
-- ✅ Best practices
-
-## 🔄 Updates and Maintenance
-
-This template is actively maintained. To get updates:
-
-```bash
-# Add template as upstream
-git remote add template https://github.com/divijsahu/flutter-app-template.git
-
-# Fetch updates
-git fetch template
-
-# Merge updates (resolve conflicts if any)
-git merge template/main --allow-unrelated-histories
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) first.
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Flutter team for the amazing framework
-- Clean Architecture by Robert C. Martin
-- Atomic Design by Brad Frost
-- Flutter community for best practices
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/divijsahu/flutter-app-template/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/divijsahu/flutter-app-template/discussions)
-- **Email**: your.email@example.com
-
-## 🗺️ Roadmap
-
-- [ ] Add authentication feature example
-- [ ] Add API integration example
-- [ ] Add state management examples (Riverpod, Bloc)
-- [ ] Add routing example with GoRouter
-- [ ] Add form validation examples
-- [ ] Add animation examples
-- [ ] Add testing examples for all layers
-- [ ] Add CI/CD workflow examples
+Users browse trending movies, save the ones they want to watch, and see which movies their group has in common — all with full offline support.
 
 ---
 
-**Built with ❤️ using Flutter and 2026 Enterprise Architecture principles.**
+## 📱 Pages
 
-**Star ⭐ this repo if you find it helpful!**
+| Page | Description |
+|---|---|
+| **Users** | List of all users with their saved movie count. Tap a user to browse movies as them. |
+| **Add User** | Form to add a new user. Works offline — syncs automatically when back online. |
+| **Movies** | Trending movies from TMDB (falls back to OMDB if TMDB is unavailable). Save/unsave with animated badge. |
+| **Movie Detail** | Full poster, overview, release date, and a row of avatars showing who saved it. |
+| **Saved Movies** | All movies bookmarked by a specific user. Unsave directly from the list. |
+| **Matches** | Movies saved by 2+ users, ordered by popularity. 🔥 Top Pick badge when every user saved the same movie. |
+
+---
+
+## 🚀 Setup
+
+### 1. Install dependencies
+
+```bash
+flutter pub get
+```
+
+### 2. Add API keys
+
+Open `lib/core/network/api_constants.dart` and replace the placeholders:
+
+```dart
+// Reqres — free key from https://app.reqres.in/api-keys
+static const reqresApiKey = 'YOUR_REQRES_KEY';
+
+// TMDB — free key from https://www.themoviedb.org/settings/api (use "API Key v3 auth")
+static const tmdbApiKey = 'YOUR_TMDB_KEY';
+
+// OMDB — free key from https://www.omdbapi.com/apikey.aspx (used as TMDB fallback)
+static const omdbApiKey = 'YOUR_OMDB_KEY';
+```
+
+### 3. Run code generation
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### 4. Run the app
+
+```bash
+flutter run
+```
+
+---
+
+## 🏗️ Architecture
+
+```
+lib/
+├── core/
+│   ├── error/          # Result<T> type + sealed AppFailure hierarchy
+│   ├── network/        # Dio clients, interceptors (retry, auth, logging)
+│   ├── router/         # GoRouter + RouteNames
+│   ├── storage/        # Drift database — tables, DAOs
+│   ├── sync/           # WorkManager offline sync worker
+│   └── utils/          # Connectivity, validators, context extensions
+│
+├── design_system/      # Colors, typography, spacing, radius, theme
+│   └── widgets/        # AppCard, AppNetworkImage, ShimmerBox, ReconnectingBar, SaveCountBadge
+│
+├── features/
+│   ├── users/          # Users list + Add User form
+│   ├── movies/         # Trending movies + Movie Detail
+│   ├── saved_movies/   # Per-user saved movies
+│   └── matches/        # Movies saved by 2+ users
+│
+├── app.dart            # MaterialApp.router
+└── main.dart           # Entry point — WorkManager init + launch sync
+```
+
+**Stack:** Flutter · Riverpod · GoRouter · Dio · Drift (SQLite) · WorkManager · Freezed · flutter_animate
+
+---
+
+## ✨ Key Features
+
+### Offline-first
+- All data is cached to a local Drift (SQLite) database on first fetch
+- Users added offline are stored locally with `pendingSync=true`
+- On next launch with connectivity, pending users are POSTed to Reqres automatically
+- The UI always reads from the local DB — network is just a sync mechanism
+
+### TMDB → OMDB fallback
+- Movies are fetched from TMDB first
+- If TMDB is unavailable (timeout, outage), the app silently falls back to OMDB
+- The same `MovieModel` and DB cache are used for both — the UI never knows the difference
+
+### Real-time streams
+- The users list, saved movies, and matches pages are all powered by Drift `Stream`s
+- Saving or unsaving a movie updates every affected page instantly with no manual refresh
+
+### Bad connection handling
+- `RetryInterceptor` silently retries GET requests up to 3 times with exponential backoff (1s → 3s → 6s)
+- POST/PATCH/PUT are never retried to prevent duplicate mutations
+- `ReconnectingBar` slides in on all pages when connectivity is lost, slides out when restored
+- Error states with a Retry button are shown only when all retries are exhausted and the DB cache is empty
+
+---
+
+## 🔑 API Keys
+
+| Service | Where to get it | Used for |
+|---|---|---|
+| Reqres | [app.reqres.in/api-keys](https://app.reqres.in/api-keys) | User list + create user |
+| TMDB | [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api) | Trending movies + detail |
+| OMDB | [omdbapi.com/apikey.aspx](https://www.omdbapi.com/apikey.aspx) | Movie fallback when TMDB is down |
+
+All three are free. OMDB is optional — the app works without it, but the movies page will show an error when TMDB is unavailable instead of falling back gracefully.
+
+---
+
+## 🗄️ Database Schema
+
+```
+UsersTable          — id, serverId, name, movieTaste, email, avatarUrl, pendingSync, createdAt
+MoviesTable         — id, tmdbId (unique), title, overview, posterPath, releaseDate, popularity
+SavedMoviesTable    — id, userId → UsersTable, movieId → MoviesTable, savedAt
+                      unique(userId, movieId) — no duplicate saves
+```
+
+Schema version: **2** (v2 migration deduplicates remote users by serverId)
+
+---
+
+## 📋 Console Output
+
+On a clean launch with all API keys set:
+
+```
+🎬 [App] initialising...
+🔄 [App] WorkManager ready
+🚀 [App] launching
+
+🚀 [App] starting up — loading users page 1
+👥 [Users] fetching page 1 from Reqres...
+┌─ 🌐 GET → /api/users?page=1
+└─ ✅ GET /api/users?page=1 → 200  (312ms)
+   📋 6 users  (page 1 of 2)
+💾 [Users] cached 6 users to DB  (page 1/2)
+📊 [Users] page 1/2 loaded — 6 users
+
+🎬 [Movies] starting up — loading page 1
+🎬 [Movies] fetching page 1 from TMDB...
+┌─ 🌐 GET → /trending/movie/day?language=en-US&page=1
+└─ ✅ GET /trending/movie/day?language=en-US&page=1 → 200  (890ms)
+   🎬 20 movies  (page 1 of X)
+💾 [Movies] cached 20 movies to DB  (page 1/X)
+📊 [Movies] page 1/X loaded — 20 movies
+```
+
+---
+
+## 📦 Build
+
+```bash
+# Analyze
+flutter analyze
+
+# Release APK
+flutter build apk --release
+
+# Release iOS
+flutter build ios --release
+```

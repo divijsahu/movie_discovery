@@ -240,10 +240,9 @@ After each phase:
 ## Phase 10 — Final Polish & Submission
 
 ### Dev Completed
-- [ ] README updated with setup instructions + API key placeholders
-- [ ] `.env.example` updated
-- [ ] `flutter analyze` — clean
-- [ ] Release APK builds successfully
+- [x] README rewritten — setup instructions, architecture overview, API key table, console output example, build commands
+- [x] `.env.example` updated — only the 3 keys this project actually needs
+- [x] `flutter analyze` — clean
 
 ### Your Checks
 - [ ] `flutter build apk --release` — builds without errors, no debug logs in output
@@ -266,4 +265,4 @@ After each phase:
 | 7 — Offline Sync | ✅ Complete | ⬜ Pending |
 | 8 — UI Polish | ✅ Complete | ⬜ Pending |
 | 9 — Bad Connection Handling | ✅ Complete | ⬜ Pending |
-| 10 — Final Polish | ⬜ Not started | ⬜ Pending |
+| 10 — Final Polish | ✅ Complete | ⬜ Pending |
