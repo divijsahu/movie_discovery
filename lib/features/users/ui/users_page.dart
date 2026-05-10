@@ -15,9 +15,10 @@ class UsersPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final usersAsync = ref.watch(usersStreamProvider);
-
-    // Kick off initial fetch
-    ref.watch(usersNotifierProvider);
+    // isLoading = true only on the very first fetch (notifier in AsyncLoading)
+    final isFetching = ref.watch(
+      usersNotifierProvider.select((s) => s.isLoading),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -40,9 +41,15 @@ class UsersPage extends ConsumerWidget {
           const ReconnectingBar(),
           Expanded(
             child: usersAsync.when(
+              // DB stream hasn't emitted yet at all — extremely brief
               loading: () => const UserListShimmer(),
               error: (e, _) => EmptyState(message: e.toString()),
               data: (users) {
+                // Show shimmer while first network fetch is in flight
+                // and the DB is still empty (no cached data yet)
+                if (isFetching && users.isEmpty) {
+                  return const UserListShimmer();
+                }
                 if (users.isEmpty) {
                   return const EmptyState(
                     icon: Icons.people_outline_rounded,
@@ -65,14 +72,17 @@ class UsersPage extends ConsumerWidget {
                       itemCount: users.length,
                       itemBuilder: (context, index) {
                         final item = users[index];
+                        // animate only plays once per item key — no re-animation on scroll
                         return UserListTile(
+                          key: ValueKey(item.user.id),
                           item: item,
                           onTap: () => context.push(
                             RouteNames.movies(item.user.id),
                           ),
                         )
                             .animate(
-                              delay: Duration(milliseconds: index * 50),
+                              key: ValueKey('anim_${item.user.id}'),
+                              delay: Duration(milliseconds: (index % 20) * 50),
                             )
                             .fadeIn(duration: 300.ms)
                             .slideX(begin: 0.05);
