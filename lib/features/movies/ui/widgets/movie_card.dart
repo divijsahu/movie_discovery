@@ -13,6 +13,12 @@ import 'package:movie_discovery/features/movies/data/models/movie_model.dart';
 import 'package:movie_discovery/features/movies/data/movies_repository.dart';
 import 'package:movie_discovery/features/movies/logic/movies_provider.dart';
 
+String _posterUrl(String? path) {
+  if (path == null || path.isEmpty) return '';
+  if (path.startsWith('http')) return path; // OMDB full URL
+  return '${ApiConstants.tmdbImageSmall}$path'; // TMDB relative path
+}
+
 class MovieCard extends ConsumerWidget {
   final MovieModel movie;
   final int activeUserId;
@@ -29,13 +35,14 @@ class MovieCard extends ConsumerWidget {
     final isSavedAsync = ref.watch(isSavedProvider((activeUserId, movie.id)));
 
     return AppCard(
-      onTap: () => context.push(RouteNames.movieDetail(movie.id, userId: activeUserId)),
+      onTap: () =>
+          context.push(RouteNames.movieDetail(movie.id, userId: activeUserId)),
       child: Row(
         children: [
           Hero(
             tag: 'movie_poster_${movie.id}',
             child: AppNetworkImage(
-              url: '${ApiConstants.tmdbImageSmall}${movie.posterPath}',
+              url: _posterUrl(movie.posterPath),
               width: 70,
               height: 100,
               borderRadius: AppRadius.smAll,
@@ -56,8 +63,8 @@ class MovieCard extends ConsumerWidget {
                 if (movie.releaseDate != null && movie.releaseDate!.length >= 4)
                   Text(
                     movie.releaseDate!.substring(0, 4),
-                    style: AppTextStyles.caption
-                        .copyWith(color: AppColors.grey500),
+                    style:
+                        AppTextStyles.caption.copyWith(color: AppColors.grey500),
                   ),
               ],
             ),
@@ -73,9 +80,12 @@ class MovieCard extends ConsumerWidget {
               ),
               isSavedAsync.when(
                 data: (saved) => IconButton(
-                  onPressed: () => ref
-                      .read(moviesRepositoryProvider)
-                      .toggleSave(activeUserId, movie.id),
+                  onPressed: () async {
+                    await ref
+                        .read(moviesRepositoryProvider)
+                        .toggleSave(activeUserId, movie.id);
+                    ref.invalidate(isSavedProvider((activeUserId, movie.id)));
+                  },
                   icon: Icon(
                     saved
                         ? Icons.bookmark_rounded

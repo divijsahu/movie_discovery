@@ -14,6 +14,12 @@ import 'package:movie_discovery/design_system/widgets/shimmer/movie_list_shimmer
 import 'package:movie_discovery/features/movies/data/movies_repository.dart';
 import 'package:movie_discovery/features/saved_movies/logic/saved_movies_provider.dart';
 
+String _posterUrl(String? path) {
+  if (path == null || path.isEmpty) return '';
+  if (path.startsWith('http')) return path;
+  return '${ApiConstants.tmdbImageSmall}$path';
+}
+
 class SavedMoviesPage extends ConsumerWidget {
   final int userId;
   const SavedMoviesPage({super.key, required this.userId});
@@ -42,6 +48,7 @@ class SavedMoviesPage extends ConsumerWidget {
           }
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+            physics: const BouncingScrollPhysics(),
             itemCount: movies.length,
             itemBuilder: (context, index) {
               final movie = movies[index];
@@ -53,9 +60,7 @@ class SavedMoviesPage extends ConsumerWidget {
                 child: Row(
                   children: [
                     AppNetworkImage(
-                      url: movie.posterPath != null
-                          ? '${ApiConstants.tmdbImageSmall}${movie.posterPath}'
-                          : '',
+                      url: _posterUrl(movie.posterPath),
                       width: 60,
                       height: 88,
                       borderRadius: AppRadius.smAll,

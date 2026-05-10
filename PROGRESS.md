@@ -192,18 +192,25 @@ After each phase:
 ## Phase 8 — UI Polish
 
 ### Dev Completed
-- [ ] Shimmer loaders — UserListShimmer, MovieListShimmer, MovieDetailShimmer
-- [ ] Staggered list animations (flutter_animate) on all list pages
-- [ ] Hero animation — movie poster card → detail page
-- [ ] AnimatedSwitcher on save count badge
-- [ ] Smooth scroll behavior
+- [x] Shimmer loaders — UserListShimmer, MovieListShimmer, MovieDetailShimmer (all dark-mode aware)
+- [x] Staggered list animations (flutter_animate) on all list pages, keyed by item ID
+- [x] Hero animation — movie poster card → detail page
+- [x] AnimatedSwitcher on save count badge
+- [x] ReconnectingBar — animated slide+fade in/out instead of abrupt appear
+- [x] BouncingScrollPhysics on all list views
+- [x] Fix: isSavedProvider invalidated after toggleSave — bookmark icon updates immediately
+- [x] Fix: OMDB poster URLs handled correctly — full https:// URLs not prefixed with TMDB base
 
 ### Your Checks
-- [ ] **Shimmer on cold start** — kill app, reopen → shimmer skeleton visible for ~300ms before list appears
+- [ ] **Shimmer on cold start** — uninstall app, reinstall, open → shimmer skeleton visible before list appears
+- [ ] **Dark mode shimmer** — switch device to dark mode → shimmer uses dark grey, not white
 - [ ] **Stagger animation** — list items fade + slide in one by one from top
 - [ ] **Hero transition** — tap a movie card → poster smoothly expands into detail page header; back → shrinks back
-- [ ] **Save badge animation** — save count badge scales up/down with AnimatedSwitcher when count changes
-- [ ] **Scroll feel** — no jank, no dropped frames on fast scroll through 20+ movies
+- [ ] **Save badge animation** — tap bookmark → badge scales 0→1, tap again → scales back to 0
+- [ ] **Bookmark icon updates** — tap bookmark on movie card or detail page → icon flips immediately (no stale state)
+- [ ] **ReconnectingBar** — enable airplane mode → bar slides down smoothly; re-enable wifi → bar slides up and fades out
+- [ ] **Scroll feel** — all lists bounce at top/bottom on iOS
+- [ ] **OMDB posters** — when TMDB is down and OMDB fallback is used, movie posters load correctly
 
 ---
 
@@ -254,6 +261,6 @@ After each phase:
 | 5 — Movies Page & Detail | ✅ Complete | ✅ Verified |
 | 6 — Saved Movies & Matches | ✅ Complete | ⬜ Pending |
 | 7 — Offline Sync | ✅ Complete | ⬜ Pending |
-| 8 — UI Polish | ⬜ Not started | ⬜ Pending |
+| 8 — UI Polish | ✅ Complete | ⬜ Pending |
 | 9 — Bad Connection Handling | ⬜ Not started | ⬜ Pending |
 | 10 — Final Polish | ⬜ Not started | ⬜ Pending |

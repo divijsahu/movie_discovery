@@ -69,6 +69,7 @@ class UsersPage extends ConsumerWidget {
                         ref.read(usersNotifierProvider.notifier).refresh(),
                     child: ListView.builder(
                       padding: const EdgeInsets.only(bottom: 100),
+                      physics: const BouncingScrollPhysics(),
                       itemCount: users.length,
                       itemBuilder: (context, index) {
                         final item = users[index];

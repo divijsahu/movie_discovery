@@ -60,6 +60,7 @@ class MoviesPage extends ConsumerWidget {
                       ref.read(moviesNotifierProvider.notifier).refresh(),
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+                    physics: const BouncingScrollPhysics(),
                     itemCount: movies.length,
                     itemBuilder: (context, index) {
                       return MovieCard(

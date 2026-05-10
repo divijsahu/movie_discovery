@@ -7,6 +7,12 @@ import 'package:movie_discovery/design_system/app_text_styles.dart';
 import 'package:movie_discovery/design_system/widgets/app_card.dart';
 import 'package:movie_discovery/design_system/widgets/app_network_image.dart';
 
+String _posterUrl(String? path) {
+  if (path == null || path.isEmpty) return '';
+  if (path.startsWith('http')) return path;
+  return '${ApiConstants.tmdbImageSmall}$path';
+}
+
 class MatchMovieTile extends StatelessWidget {
   final MovieWithSavers match;
   final bool isTopPick;
@@ -29,9 +35,7 @@ class MatchMovieTile extends StatelessWidget {
           Hero(
             tag: 'match_poster_${movie.tmdbId}',
             child: AppNetworkImage(
-              url: movie.posterPath != null
-                  ? '${ApiConstants.tmdbImageSmall}${movie.posterPath}'
-                  : '',
+              url: _posterUrl(movie.posterPath),
               width: 60,
               height: 88,
               borderRadius: AppRadius.smAll,

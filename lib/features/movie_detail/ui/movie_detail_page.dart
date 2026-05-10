@@ -79,9 +79,13 @@ class MovieDetailPage extends ConsumerWidget {
                             : Icons.bookmark_border_rounded,
                         color: Colors.white,
                       ),
-                      onPressed: () => ref
-                          .read(moviesRepositoryProvider)
-                          .toggleSave(activeUserId, tmdbId),
+                      onPressed: () async {
+                        await ref
+                            .read(moviesRepositoryProvider)
+                            .toggleSave(activeUserId, tmdbId);
+                        ref.invalidate(
+                            isSavedProvider((activeUserId, tmdbId)));
+                      },
                     ),
                     loading: () => const SizedBox.shrink(),
                     error: (_, __) => const SizedBox.shrink(),

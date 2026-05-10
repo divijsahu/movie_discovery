@@ -36,6 +36,7 @@ class MatchesPage extends ConsumerWidget {
           final totalUsers = totalUsersAsync.valueOrNull ?? 0;
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+            physics: const BouncingScrollPhysics(),
             itemCount: matches.length,
             itemBuilder: (context, index) {
               final match = matches[index];

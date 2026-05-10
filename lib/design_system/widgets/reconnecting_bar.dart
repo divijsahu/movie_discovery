@@ -8,15 +8,23 @@ class ReconnectingBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOnline = ref.watch(connectivityStreamProvider).valueOrNull ?? true;
-    if (isOnline) return const SizedBox.shrink();
-    return Container(
-      width: double.infinity,
-      color: Colors.orange,
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: const Text(
-        'No internet — changes will sync when reconnected',
-        textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.white, fontSize: 12),
+    return AnimatedSlide(
+      offset: isOnline ? const Offset(0, -1) : Offset.zero,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: AnimatedOpacity(
+        opacity: isOnline ? 0 : 1,
+        duration: const Duration(milliseconds: 300),
+        child: Container(
+          width: double.infinity,
+          color: Colors.orange,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: const Text(
+            'No internet — changes will sync when reconnected',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontSize: 12),
+          ),
+        ),
       ),
     );
   }
