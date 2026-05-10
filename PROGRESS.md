@@ -63,13 +63,13 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 ## Phase 3 — Networking Layer
 
 ### Dev Completed
-- [ ] `retry_interceptor.dart` — exponential backoff, retries on 5xx + connection errors
-- [ ] `auth_interceptor.dart` — Reqres API key header
-- [ ] `dio_client.dart` — two Dio instances (reqresDio, tmdbDio) as keepAlive Riverpod providers
-- [ ] `connectivity_service.dart` — finalized stream + isOnline providers
+- [x] `retry_interceptor.dart` — exponential backoff, retries on 5xx + connection errors
+- [x] `auth_interceptor.dart` — Reqres API key header
+- [x] `dio_client.dart` — two Dio instances (reqresDio, tmdbDio) as keepAlive Riverpod providers
+- [x] `connectivity_service.dart` — finalized stream + isOnline providers
 
 ### Your Checks
-- [ ] `flutter analyze` — no errors
+- [x] `flutter analyze` — no errors
 - [ ] `flutter run` — app boots cleanly
 
 ---
@@ -206,7 +206,7 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 |-------|--------|---------------|
 | 1 — Setup & Architecture | ✅ Complete | ⬜ Pending |
 | 2 — Database Schema | ✅ Complete | ⬜ Pending |
-| 3 — Networking Layer | ⬜ Not started | ⬜ Pending |
+| 3 — Networking Layer | ✅ Complete | ⬜ Pending |
 | 4 — Users Page & Add User | ⬜ Not started | ⬜ Pending |
 | 5 — Movies Page & Detail | ⬜ Not started | ⬜ Pending |
 | 6 — Saved Movies & Matches | ⬜ Not started | ⬜ Pending |

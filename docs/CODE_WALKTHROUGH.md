@@ -404,7 +404,51 @@ You never edit the `.g.dart` file. Re-run `build_runner` any time you change a t
 
 ---
 
-## What's Next
+## Phase 3 — Networking Layer
+
+The goal of Phase 3 is to set up two typed HTTP clients — one for Reqres, one for TMDB — with automatic retries on bad connections and auth headers injected transparently.
+
+---
+
+### Retry Interceptor — `core/network/interceptors/retry_interceptor.dart`
+
+Dio interceptors sit in the request/response pipeline. `RetryInterceptor` hooks into `onError` — every failed request passes through here before the error reaches the caller.
+
+The logic:
+1. Read `retryAttempt` from `requestOptions.extra` (defaults to 0 if not set)
+2. Check if the error is retryable (connection timeout, receive timeout, connection error, or 5xx status)
+3. If retryable and under `maxRetries`, wait for the backoff delay (`1s → 3s → 6s`) then re-fire the original request via `dio.fetch(options)`
+4. If the retry succeeds, `handler.resolve(response)` — the original caller gets the response as if nothing happened
+5. If the retry also fails, `handler.next(err)` — pass the error downstream
+
+The retry Dio instance passed into `RetryInterceptor` is a plain `Dio` with no interceptors — this prevents infinite retry loops (the retry request doesn't go through `RetryInterceptor` again).
+
+---
+
+### Auth Interceptor — `core/network/interceptors/auth_interceptor.dart`
+
+Hooks into `onRequest` and adds the Reqres API key as an `x-api-key` header to every outgoing request on the Reqres client. The TMDB client doesn't use this interceptor — TMDB auth is handled via a query parameter (`api_key`) set in `BaseOptions.queryParameters` instead.
+
+---
+
+### Dio Clients — `core/network/dio_client.dart`
+
+Two separate `Dio` instances as Riverpod `Provider`s:
+
+**`reqresDioProvider`**
+- Base URL: `https://reqres.in/api`
+- Interceptors: `ReqresAuthInterceptor` → `RetryInterceptor` → `LogInterceptor` (debug only)
+
+**`tmdbDioProvider`**
+- Base URL: `https://api.themoviedb.org/3`
+- `api_key` query param attached to every request via `BaseOptions.queryParameters`
+- Interceptors: `RetryInterceptor` → `LogInterceptor` (debug only)
+
+Keeping them as separate providers means feature repositories declare exactly which client they depend on — `MoviesRepository` takes `tmdbDioProvider`, `UsersRepository` takes `reqresDioProvider`. There's no shared mutable state between the two.
+
+`LogInterceptor(responseBody: true)` is only added in `kDebugMode` — it prints full request/response bodies to the console during development but is stripped from release builds.
+
+---
 
 | Phase | What it adds |
 |---|---|
