@@ -10,8 +10,11 @@ class AppLogInterceptor extends Interceptor {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     _stopwatches[_key(options)] = Stopwatch()..start();
     final attempt = options.extra['retryAttempt'] as int? ?? 0;
-    final tag = attempt > 0 ? ' [retry #$attempt]' : '';
-    print('┌─ 🌐 ${options.method}$tag → ${_shortUri(options.uri)}');
+    if (attempt > 0) {
+      print('├─ 🔁 RETRY #$attempt ${options.method} ${_shortUri(options.uri)}');
+    } else {
+      print('┌─ 🌐 ${options.method} → ${_shortUri(options.uri)}');
+    }
     handler.next(options);
   }
 
@@ -35,7 +38,7 @@ class AppLogInterceptor extends Interceptor {
     final status = err.response?.statusCode;
 
     if (attempt > 0) {
-      print('├─ 🔁 RETRY #$attempt ${options.method} ${_shortUri(options.uri)}');
+      print('├─ ⚠️  prev attempt failed, retrying...');
     }
 
     final statusStr = status != null ? '$status ' : '';

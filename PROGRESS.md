@@ -217,20 +217,23 @@ After each phase:
 ## Phase 9 — Bad Connection Handling
 
 ### Dev Completed
-- [ ] ReconnectingBar — shows on connectivity loss, hides on reconnect
-- [ ] RetryInterceptor — silent retries with backoff on all API calls
-- [ ] Error states shown when all retries exhausted
+- [x] ReconnectingBar — animated slide+fade, shows on connectivity loss, hides on reconnect
+- [x] ReconnectingBar added to all 4 pages (Users, Movies, Saved Movies, Matches)
+- [x] RetryInterceptor — silent retries with exponential backoff on all GET calls
+- [x] Error states shown when all retries exhausted (Movies page + Detail page)
+- [x] Retry log moved to onRequest — fires before the retry attempt, not after
 
 ### Your Checks
-- [ ] **ReconnectingBar** — enable airplane mode mid-use → orange bar appears at top of Users page with "No internet" message
-- [ ] **Bar disappears** — re-enable wifi → bar hides automatically within ~2 seconds
-- [ ] **Silent retry** — throttle network (Network Link Conditioner or Charles), make a request → console shows:
+- [x] **ReconnectingBar** — enable airplane mode mid-use → orange bar slides down on all pages
+- [x] **Bar disappears** — re-enable wifi → bar slides up and fades out within ~2 seconds
+- [ ] **Silent retry** — throttle network, make a request → console shows:
   ```
-  🔁 RETRY #1 GET /users?page=1
-  🔁 RETRY #2 GET /users?page=1
-  └─ ✅ GET /users?page=1 → 200  (Xms)   ← succeeds on retry
+  ┌─ 🌐 GET → /trending/movie/day?page=1
+  ├─ 🔁 RETRY #1 GET /trending/movie/day?page=1
+  ├─ 🔁 RETRY #2 GET /trending/movie/day?page=1
+  └─ ✅ GET /trending/movie/day?page=1 → 200  (Xms)
   ```
-- [ ] **All retries exhausted** — full offline, all 3 retries fail → error state shown in UI, no crash
+- [ ] **All retries exhausted** — full offline, 3 retries fail → error state shown, no crash
 
 ---
 
@@ -262,5 +265,5 @@ After each phase:
 | 6 — Saved Movies & Matches | ✅ Complete | ⬜ Pending |
 | 7 — Offline Sync | ✅ Complete | ⬜ Pending |
 | 8 — UI Polish | ✅ Complete | ⬜ Pending |
-| 9 — Bad Connection Handling | ⬜ Not started | ⬜ Pending |
+| 9 — Bad Connection Handling | ✅ Complete | ⬜ Pending |
 | 10 — Final Polish | ⬜ Not started | ⬜ Pending |
