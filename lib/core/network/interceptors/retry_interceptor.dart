@@ -38,9 +38,14 @@ class RetryInterceptor extends Interceptor {
     }
   }
 
-  bool _isRetryable(DioException err) =>
-      err.type == DioExceptionType.connectionTimeout ||
-      err.type == DioExceptionType.receiveTimeout ||
-      err.type == DioExceptionType.connectionError ||
-      (err.response?.statusCode != null && err.response!.statusCode! >= 500);
+  bool _isRetryable(DioException err) {
+    // Never retry non-idempotent methods — a failed POST must not be duplicated
+    final method = err.requestOptions.method.toUpperCase();
+    if (method == 'POST' || method == 'PATCH' || method == 'PUT') return false;
+
+    return err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.receiveTimeout ||
+        err.type == DioExceptionType.connectionError ||
+        (err.response?.statusCode != null && err.response!.statusCode! >= 500);
+  }
 }

@@ -44,11 +44,12 @@ class AddUserNotifier extends AsyncNotifier<void> {
           if (kDebugMode) print('☁️  [AddUser] synced to Reqres  (serverId=$serverId)');
         }
       } catch (e) {
-        if (kDebugMode) print('⚠️  [AddUser] POST failed, scheduling background sync: $e');
+        // POST failed mid-flight — mark as pending so sync worker picks it up
+        await db.usersDao.markPendingSync(localId);
+        if (kDebugMode) print('⚠️  [AddUser] POST failed — marked pendingSync=true, scheduling background sync');
         await _scheduleSync(localId);
       }
     } else {
-      if (kDebugMode) print('📵 [AddUser] offline — WorkManager task queued for localId=$localId');
       await _scheduleSync(localId);
     }
 
@@ -57,12 +58,19 @@ class AddUserNotifier extends AsyncNotifier<void> {
   }
 
   Future<void> _scheduleSync(int localId) async {
-    await Workmanager().registerOneOffTask(
-      'sync_pending_users_$localId',
-      SyncWorker.taskName,
-      constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingWorkPolicy.keep,
-    );
+    try {
+      await Workmanager().registerOneOffTask(
+        'sync_pending_users_$localId',
+        SyncWorker.taskName,
+        constraints: Constraints(networkType: NetworkType.connected),
+        existingWorkPolicy: ExistingWorkPolicy.keep,
+      );
+      if (kDebugMode) print('📵 [AddUser] offline — WorkManager task queued for localId=$localId');
+    } catch (e) {
+      // WorkManager is Android-only; iOS BGTask requires Info.plist registration.
+      // The user is already saved locally — sync will happen on next app open.
+      if (kDebugMode) print('⚠️  [AddUser] WorkManager unavailable (iOS?) — will sync on next launch: $e');
+    }
   }
 }
 

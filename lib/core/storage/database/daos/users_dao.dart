@@ -42,6 +42,10 @@ class UsersDao extends DatabaseAccessor<AppDatabase> with _$UsersDaoMixin {
       (update(usersTable)..where((u) => u.id.equals(localId)))
           .write(const UsersTableCompanion(pendingSync: Value(false)));
 
+  Future<void> markPendingSync(int localId) =>
+      (update(usersTable)..where((u) => u.id.equals(localId)))
+          .write(const UsersTableCompanion(pendingSync: Value(true)));
+
   Future<List<UsersTableData>> getPendingSyncUsers() =>
       (select(usersTable)..where((u) => u.pendingSync.equals(true))).get();
 
