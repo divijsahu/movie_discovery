@@ -35,6 +35,7 @@ class MoviesRepository {
     // OMDB fallback
     try {
       final movies = await _omdb.fetchPopular(page);
+      if (kDebugMode) print('📊 [Movies] OMDB returned ${movies.length} movies for page $page');
       if (movies.isEmpty) return const Failure(NetworkFailure());
       await _cacheMovies(movies);
       if (kDebugMode) print('💾 [Movies] OMDB fallback: cached ${movies.length} movies to DB');
@@ -63,30 +64,39 @@ class MoviesRepository {
   }
 
   Future<Result<MovieModel>> fetchDetail(int tmdbId) async {
-    try {
-      final movie = await _tmdb.fetchDetail(tmdbId);
-      return Success(movie);
-    } on DioException catch (_) {
-      // TMDB down — try OMDB by imdbID format (best effort)
+    // Check DB cache first — if we have it, serve immediately
+    final cached = await _db.moviesDao.getMovieByTmdbId(tmdbId);
+
+    // Try TMDB detail (only makes sense for real TMDB IDs, i.e. < 10 million)
+    if (tmdbId < 10000000) {
+      try {
+        final movie = await _tmdb.fetchDetail(tmdbId);
+        return Success(movie);
+      } on DioException catch (_) {}
+    }
+
+    // Try OMDB by constructing imdbID (best effort for real TMDB IDs)
+    if (tmdbId < 10000000) {
       try {
         final imdbId = 'tt${tmdbId.toString().padLeft(7, '0')}';
         final movie = await _omdb.fetchDetailByImdbId(imdbId);
         if (movie != null) return Success(movie);
       } catch (_) {}
-      // Fall back to cached DB version
-      final cached = await _db.moviesDao.getMovieByTmdbId(tmdbId);
-      if (cached != null) {
-        return Success(MovieModel(
-          id: cached.tmdbId,
-          title: cached.title,
-          overview: cached.overview,
-          posterPath: cached.posterPath,
-          releaseDate: cached.releaseDate,
-          popularity: cached.popularity,
-        ));
-      }
-      return const Failure(NetworkFailure());
     }
+
+    // Fall back to DB cache (covers OMDB-sourced movies whose id is a hashCode)
+    if (cached != null) {
+      return Success(MovieModel(
+        id: cached.tmdbId,
+        title: cached.title,
+        overview: cached.overview,
+        posterPath: cached.posterPath,
+        releaseDate: cached.releaseDate,
+        popularity: cached.popularity,
+      ));
+    }
+
+    return const Failure(NetworkFailure());
   }
 
   Future<void> toggleSave(int userId, int tmdbId) async {
