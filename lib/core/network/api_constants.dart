@@ -1,6 +1,6 @@
 class ApiConstants {
   static const reqresBase     = 'https://reqres.in/api';
-  static const reqresApiKey   = 'YOUR_REQRES_KEY';
+  static const reqresApiKey   = 'free_user_3DX5WtZgAM0j2EtH7YRbDHXMRoF';
 
   static const tmdbBase       = 'https://api.themoviedb.org/3';
   static const tmdbApiKey     = 'YOUR_TMDB_KEY';

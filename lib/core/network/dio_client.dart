@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movie_discovery/core/network/api_constants.dart';
 import 'package:movie_discovery/core/network/interceptors/auth_interceptor.dart';
+import 'package:movie_discovery/core/network/interceptors/logging_interceptor.dart';
 import 'package:movie_discovery/core/network/interceptors/retry_interceptor.dart';
 
 final reqresDioProvider = Provider<Dio>((ref) {
@@ -14,7 +15,7 @@ final reqresDioProvider = Provider<Dio>((ref) {
   dio.interceptors.addAll([
     ReqresAuthInterceptor(),
     RetryInterceptor(dio: Dio(BaseOptions(baseUrl: ApiConstants.reqresBase))),
-    if (kDebugMode) LogInterceptor(responseBody: true),
+    if (kDebugMode) AppLogInterceptor(),
   ]);
   return dio;
 });
@@ -28,7 +29,7 @@ final tmdbDioProvider = Provider<Dio>((ref) {
   ));
   dio.interceptors.addAll([
     RetryInterceptor(dio: Dio(BaseOptions(baseUrl: ApiConstants.tmdbBase))),
-    if (kDebugMode) LogInterceptor(responseBody: true),
+    if (kDebugMode) AppLogInterceptor(),
   ]);
   return dio;
 });

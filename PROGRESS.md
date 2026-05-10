@@ -37,10 +37,14 @@ After each phase:
 ### Your Checks
 - [x] `flutter pub get` — resolves cleanly
 - [x] `flutter analyze` — no errors
-- [x] `flutter run` — app boots, shows placeholder "Users" screen
-- [x] Build confirmed on: `[ ] iOS` `[ ] Android`
-
-Commit → "Phase 1 complete: Project setup, architecture, and core utilities implemented. Ready for database schema design."
+- [ ] `flutter run` — app boots, console shows:
+  ```
+  🎬 [App] initialising...
+  🔄 [App] WorkManager ready
+  🚀 [App] launching
+  ```
+- [ ] Screen shows placeholder "Users" text centered on white background
+- [ ] No red error screen, no exceptions in console
 ---
 
 ## Phase 2 — Database Schema (Drift)
@@ -56,7 +60,8 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 ### Your Checks
 - [x] `dart run build_runner build --delete-conflicting-outputs` — no errors
 - [x] `flutter analyze` — no errors
-- [ ] `flutter run` — app still boots cleanly
+- [ ] `flutter run` — app still boots, no crash, same placeholder screen as Phase 1
+- [ ] No migration errors in console (schema version 1, fresh install)
 
 ---
 
@@ -70,7 +75,12 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 
 ### Your Checks
 - [x] `flutter analyze` — no errors
-- [ ] `flutter run` — app boots cleanly
+- [ ] `flutter run` — app boots, console shows:
+  ```
+  🌐 GET → /users?page=1   (before API key was set, showed 403)
+  └─ ❌ GET /users?page=1 → 403 badResponse
+  ```
+- [ ] After setting real API key: `└─ ✅ GET /users?page=1 → 200  (Xms)`
 
 ---
 
@@ -89,10 +99,53 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 
 ### Your Checks
 - [x] `flutter analyze` — no errors
-- [ ] `flutter run` — Users page loads, shows list from Reqres API
-- [ ] Add user online — appears in list immediately
-- [ ] Add user offline — appears locally, pending sync indicator
-- [ ] Infinite scroll — loads next page on scroll
+- [x] **App start** — console shows full startup + first fetch sequence:
+  ```
+  🎬 [App] initialising...
+  🔄 [App] WorkManager ready
+  🚀 [App] launching
+
+  🚀 [App] starting up — loading users page 1
+  👥 [Users] fetching page 1 from Reqres...
+  ┌─ 🌐 GET → /users?page=1
+  └─ ✅ GET /users?page=1 → 200  (312ms)
+     📋 6 users  (page 1 of 2)
+  💾 [Users] cached 6 users to DB  (page 1/2)
+  📊 [Users] page 1/2 loaded — 6 users
+  ```
+- [ ] **Users list visible** — 6 avatars with names and email subtitles animate in with stagger
+- [ ] **Shimmer** — briefly visible before first data arrives on a slow connection
+- [ ] **Infinite scroll** — scroll to bottom, console shows:
+  ```
+  🔽 [Users] loading more — page 2/2
+  👥 [Users] fetching page 2 from Reqres...
+  └─ ✅ GET /users?page=2 → 200  (Xms)
+  💾 [Users] cached 6 users to DB  (page 2/2)
+  📊 [Users] page 2/2 loaded — 6 users
+  ```
+  Total 12 users now visible in list
+- [ ] **Pull-to-refresh** — swipe down, console shows `🔄 [Users] pull-to-refresh triggered`, list reloads
+- [ ] **Add User (online)** — tap FAB, fill Name + Movie Taste, submit. Console shows:
+  ```
+  👤 [AddUser] submitting "Alex" — online: true
+  💾 [AddUser] saved locally  (localId=X, pendingSync=false)
+  ┌─ 🌐 POST → /users
+  └─ ✅ POST /users → 201  (Xms)
+     👤 created user id=... name=Alex
+  ☁️  [AddUser] synced to Reqres  (serverId=...)
+  ✅ [AddUser] done
+  ```
+  New user appears at top of list immediately
+- [ ] **Add User (offline)** — enable airplane mode, add another user. Console shows:
+  ```
+  👤 [AddUser] submitting "Sam" — online: false
+  💾 [AddUser] saved locally  (localId=X, pendingSync=true)
+  📵 [AddUser] offline — WorkManager task queued for localId=X
+  ✅ [AddUser] done
+  ```
+  User appears in list with a `⟳` sync icon next to their name
+- [ ] **Pending sync icon** — offline-created user shows small sync icon in tile
+- [ ] **ReconnectingBar** — enable airplane mode, orange banner appears at top of Users page
 
 ---
 
@@ -111,10 +164,22 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 
 ### Your Checks
 - [ ] `flutter analyze` — no errors
-- [ ] `flutter run` — Movies page loads trending movies
-- [ ] Save/unsave movie — badge animates, count updates in real time
-- [ ] Tap movie — Hero animation to detail page
-- [ ] Detail page — shows savers row with avatars
+- [ ] **Movies page** — tap any user → movies page loads, console shows:
+  ```
+  🎬 [Movies] fetching page 1 from TMDB...
+  ┌─ 🌐 GET → /trending/movie/day?page=1
+  └─ ✅ GET /trending/movie/day?page=1 → 200  (Xms)
+     🎬 20 movies  (page 1 of X)
+  💾 [Movies] cached 20 movies to DB
+  ```
+- [ ] Movie posters load with cached images (no broken image icons)
+- [ ] **Save a movie** — tap bookmark on a movie card:
+  - Badge animates from 0 → 1
+  - Tap again → badge animates back to 0
+- [ ] **Infinite scroll** — scroll to bottom of movies list, next page loads
+- [ ] **Tap a movie card** — Hero animation plays, detail page opens
+- [ ] **Detail page** — poster expands in SliverAppBar, overview text visible
+- [ ] **Savers row** — after saving a movie as 1+ users, avatars appear on detail page with "X users want to watch this"
 
 ---
 
@@ -130,10 +195,14 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 
 ### Your Checks
 - [ ] `flutter analyze` — no errors
-- [ ] `flutter run` — Saved Movies page shows correct movies per user
-- [ ] Matches page — shows movies saved by 2+ users
-- [ ] Top Pick badge — appears when all users saved the same movie
-- [ ] Real-time update — saving a movie updates Matches instantly
+- [ ] **Saved Movies page** — tap a user → tap "Saved" → page shows only movies that user bookmarked
+- [ ] **Empty state** — user with no saves sees empty state with "Browse Movies" CTA button
+- [ ] **Save a movie then check** — go to movies, save one, go back to saved → it appears immediately (stream update, no refresh needed)
+- [ ] **Matches page** — tap Matches in AppBar:
+  - Empty state shown when fewer than 2 users saved any common movie
+  - Save the same movie as 2 different users → movie appears in Matches instantly
+- [ ] **Saver count** — matches list shows how many users saved each movie
+- [ ] **Top Pick badge** — save the same movie as ALL users → "Top Pick" badge appears on that tile
 
 ---
 
@@ -147,9 +216,14 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 
 ### Your Checks
 - [ ] `flutter analyze` — no errors
-- [ ] Add user with airplane mode ON → user appears locally
-- [ ] Turn airplane mode OFF → user syncs, `pendingSync` cleared
-- [ ] No duplicate users after sync
+- [ ] **Offline add user** — enable airplane mode, add a user:
+  - User appears in list with `⟳` sync icon
+  - Console shows `📵 [AddUser] offline — WorkManager task queued`
+- [ ] **Reconnect sync** — disable airplane mode:
+  - Console shows sync worker firing, POST succeeds
+  - `⟳` icon disappears from the user tile
+  - `pendingSync` cleared in DB (no duplicate row)
+- [ ] **No duplicates** — user appears exactly once after sync
 
 ---
 
@@ -163,10 +237,11 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 - [ ] Smooth scroll behavior
 
 ### Your Checks
-- [ ] `flutter run` — shimmer shows on initial load
-- [ ] List items animate in with stagger
-- [ ] Hero transition is smooth
-- [ ] No jank on scroll
+- [ ] **Shimmer on cold start** — kill app, reopen → shimmer skeleton visible for ~300ms before list appears
+- [ ] **Stagger animation** — list items fade + slide in one by one from top
+- [ ] **Hero transition** — tap a movie card → poster smoothly expands into detail page header; back → shrinks back
+- [ ] **Save badge animation** — save count badge scales up/down with AnimatedSwitcher when count changes
+- [ ] **Scroll feel** — no jank, no dropped frames on fast scroll through 20+ movies
 
 ---
 
@@ -178,9 +253,15 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 - [ ] Error states shown when all retries exhausted
 
 ### Your Checks
-- [ ] Enable airplane mode mid-use → ReconnectingBar appears
-- [ ] Disable airplane mode → bar disappears, data reloads
-- [ ] Throttle network → retries happen silently, no crash
+- [ ] **ReconnectingBar** — enable airplane mode mid-use → orange bar appears at top of Users page with "No internet" message
+- [ ] **Bar disappears** — re-enable wifi → bar hides automatically within ~2 seconds
+- [ ] **Silent retry** — throttle network (Network Link Conditioner or Charles), make a request → console shows:
+  ```
+  🔁 RETRY #1 GET /users?page=1
+  🔁 RETRY #2 GET /users?page=1
+  └─ ✅ GET /users?page=1 → 200  (Xms)   ← succeeds on retry
+  ```
+- [ ] **All retries exhausted** — full offline, all 3 retries fail → error state shown in UI, no crash
 
 ---
 
@@ -193,10 +274,10 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 - [ ] Release APK builds successfully
 
 ### Your Checks
-- [ ] `flutter build apk --release` — builds without errors
-- [ ] APK installs and runs on device
-- [ ] All pages working end-to-end
-- [ ] README is clear for reviewer
+- [ ] `flutter build apk --release` — builds without errors, no debug logs in output
+- [ ] APK installs and runs on a physical Android device
+- [ ] All 6 pages reachable and functional end-to-end
+- [ ] README has clear setup steps and API key instructions for the reviewer
 
 ---
 
