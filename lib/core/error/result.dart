@@ -1,4 +1,4 @@
-import 'package:flutter_app_template/core/errors/failures.dart';
+import 'package:movie_discovery/core/error/failures.dart';
 
 sealed class Result<T> {
   const Result();
@@ -14,7 +14,7 @@ class Failure<T> extends Result<T> {
   const Failure(this.failure);
 }
 
-extension ResultExtension<T> on Result<T> {
+extension ResultX<T> on Result<T> {
   R when<R>({
     required R Function(T data) success,
     required R Function(AppFailure failure) failure,

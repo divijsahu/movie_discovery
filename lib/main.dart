@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app_template/app/app.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movie_discovery/app.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const App());
+  runApp(const ProviderScope(child: App()));
 }

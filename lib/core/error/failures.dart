@@ -1,6 +1,20 @@
+import 'package:dio/dio.dart';
+
 sealed class AppFailure {
   final String message;
   const AppFailure(this.message);
+
+  factory AppFailure.fromDio(DioException e) {
+    if (e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.connectionTimeout) {
+      return const NetworkFailure();
+    }
+    if (e.response?.statusCode == 401) return const UnauthorizedFailure();
+    return ServerFailure(
+      e.response?.data?['message']?.toString() ?? e.message ?? 'Server error',
+      statusCode: e.response?.statusCode,
+    );
+  }
 }
 
 class ServerFailure extends AppFailure {

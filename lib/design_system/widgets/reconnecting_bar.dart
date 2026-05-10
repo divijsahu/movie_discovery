@@ -1,0 +1,23 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movie_discovery/core/utils/connectivity_service.dart';
+
+class ReconnectingBar extends ConsumerWidget {
+  const ReconnectingBar({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = ref.watch(connectivityStreamProvider).valueOrNull ?? true;
+    if (isOnline) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      color: Colors.orange,
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: const Text(
+        'No internet — changes will sync when reconnected',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.white, fontSize: 12),
+      ),
+    );
+  }
+}
