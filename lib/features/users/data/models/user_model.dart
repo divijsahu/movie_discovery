@@ -3,6 +3,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'user_model.freezed.dart';
 part 'user_model.g.dart';
 
+// ignore_for_file: invalid_annotation_target
+
 @freezed
 class UserModel with _$UserModel {
   const factory UserModel({

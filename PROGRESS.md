@@ -77,18 +77,18 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 ## Phase 4 — Users Page & Add User
 
 ### Dev Completed
-- [ ] `user_model.dart` — Freezed model with JSON serialization
-- [ ] `users_api.dart` — fetchUsers (paginated), createUser
-- [ ] `users_repository.dart` — watchUsers stream, fetchAndCachePage
-- [ ] `users_provider.dart` — infinite scroll, loadMore, refresh
-- [ ] `users_page.dart` — list with shimmer, infinite scroll, staggered animations
-- [ ] `user_list_tile.dart` — avatar, name, save count badge
-- [ ] `add_user_page.dart` — form with name + movie taste fields
-- [ ] `add_user_provider.dart` — online/offline handling, WorkManager scheduling
-- [ ] GoRouter routes wired: `/` (users), `/add-user`, `/matches`
+- [x] `user_model.dart` — Freezed model with JSON serialization
+- [x] `users_api.dart` — fetchUsers (paginated), createUser
+- [x] `users_repository.dart` — watchUsers stream, fetchAndCachePage
+- [x] `users_provider.dart` — infinite scroll, loadMore, refresh
+- [x] `users_page.dart` — list with shimmer, infinite scroll, staggered animations
+- [x] `user_list_tile.dart` — avatar, name, save count badge
+- [x] `add_user_page.dart` — form with name + movie taste fields
+- [x] `add_user_provider.dart` — online/offline handling, WorkManager scheduling
+- [x] GoRouter routes wired: `/` (users), `/add-user`, `/matches`
 
 ### Your Checks
-- [ ] `flutter analyze` — no errors
+- [x] `flutter analyze` — no errors
 - [ ] `flutter run` — Users page loads, shows list from Reqres API
 - [ ] Add user online — appears in list immediately
 - [ ] Add user offline — appears locally, pending sync indicator
@@ -207,7 +207,7 @@ Commit → "Phase 1 complete: Project setup, architecture, and core utilities im
 | 1 — Setup & Architecture | ✅ Complete | ⬜ Pending |
 | 2 — Database Schema | ✅ Complete | ⬜ Pending |
 | 3 — Networking Layer | ✅ Complete | ⬜ Pending |
-| 4 — Users Page & Add User | ⬜ Not started | ⬜ Pending |
+| 4 — Users Page & Add User | ✅ Complete | ⬜ Pending |
 | 5 — Movies Page & Detail | ⬜ Not started | ⬜ Pending |
 | 6 — Saved Movies & Matches | ⬜ Not started | ⬜ Pending |
 | 7 — Offline Sync | ⬜ Not started | ⬜ Pending |
