@@ -33,3 +33,17 @@ final tmdbDioProvider = Provider<Dio>((ref) {
   ]);
   return dio;
 });
+
+final omdbDioProvider = Provider<Dio>((ref) {
+  final dio = Dio(BaseOptions(
+    baseUrl: ApiConstants.omdbBase,
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 15),
+    queryParameters: {'apikey': ApiConstants.omdbApiKey},
+  ));
+  dio.interceptors.addAll([
+    RetryInterceptor(dio: Dio(BaseOptions(baseUrl: ApiConstants.omdbBase))),
+    if (kDebugMode) AppLogInterceptor(),
+  ]);
+  return dio;
+});

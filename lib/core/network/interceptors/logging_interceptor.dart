@@ -52,7 +52,7 @@ class AppLogInterceptor extends Interceptor {
   String _shortUri(Uri uri) {
     final path = uri.path;
     final query = uri.queryParameters.entries
-        .where((e) => e.key != 'api_key') // hide TMDB key from logs
+        .where((e) => e.key != 'api_key' && e.key != 'apikey') // hide API keys from logs
         .map((e) => '${e.key}=${e.value}')
         .join('&');
     return query.isEmpty ? path : '$path?$query';

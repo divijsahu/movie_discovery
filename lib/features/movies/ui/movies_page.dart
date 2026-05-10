@@ -15,6 +15,7 @@ class MoviesPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final fetchState = ref.watch(moviesNotifierProvider);
     final movies = ref.watch(moviesListProvider);
+    final error = ref.watch(moviesErrorProvider);
     final isFetching = fetchState.isLoading;
 
     return Scaffold(
@@ -25,11 +26,26 @@ class MoviesPage extends ConsumerWidget {
           Expanded(
             child: () {
               if (isFetching && movies.isEmpty) return const MovieListShimmer();
+
+              if (error != null && movies.isEmpty) {
+                return EmptyState(
+                  icon: Icons.cloud_off_rounded,
+                  title: 'Could not load movies',
+                  subtitle: error,
+                  action: TextButton.icon(
+                    onPressed: () =>
+                        ref.read(moviesNotifierProvider.notifier).refresh(),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Retry'),
+                  ),
+                );
+              }
+
               if (movies.isEmpty) {
                 return const EmptyState(
                   icon: Icons.movie_outlined,
                   title: 'No movies yet',
-                  subtitle: 'Check your internet connection.',
+                  subtitle: 'Pull down to refresh.',
                 );
               }
               return NotificationListener<ScrollNotification>(

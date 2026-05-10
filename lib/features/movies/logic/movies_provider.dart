@@ -7,36 +7,35 @@ import 'package:movie_discovery/features/movies/data/models/movie_model.dart';
 
 // ignore_for_file: avoid_print
 
-// Holds the fetched movie list in memory for the current session
-final _moviesListProvider = StateProvider<List<MovieModel>>((ref) => []);
+typedef MoviesState = ({List<MovieModel> movies, String? error});
 
-class MoviesNotifier extends AsyncNotifier<void> {
+class MoviesNotifier extends AsyncNotifier<MoviesState> {
   int _currentPage = 1;
   int _totalPages = 1;
   bool _isFetchingMore = false;
 
   @override
-  Future<void> build() async {
+  Future<MoviesState> build() async {
     if (kDebugMode) print('\n🎬 [Movies] starting up — loading page 1');
-    await _loadPage(1);
+    return _loadPage(1, current: []);
   }
 
-  Future<void> _loadPage(int page) async {
+  Future<MoviesState> _loadPage(int page, {required List<MovieModel> current}) async {
     final result = await ref.read(moviesRepositoryProvider).fetchTrending(page);
-    result.when(
+    return result.when(
       success: (response) {
         _totalPages = response.totalPages;
         _currentPage = response.page;
-        final current = ref.read(_moviesListProvider);
-        if (page == 1) {
-          ref.read(_moviesListProvider.notifier).state = response.results;
-        } else {
-          ref.read(_moviesListProvider.notifier).state = [...current, ...response.results];
-        }
+        final updated = page == 1
+            ? response.results
+            : [...current, ...response.results];
         if (kDebugMode) print('📊 [Movies] page $_currentPage/$_totalPages loaded — ${response.results.length} movies');
+        return (movies: updated, error: null);
       },
       failure: (f) {
         if (kDebugMode) print('⚠️  [Movies] page $page failed: ${f.message}');
+        // Keep existing list if we have one, only surface error when empty
+        return (movies: current, error: current.isEmpty ? f.message : null);
       },
     );
   }
@@ -45,22 +44,28 @@ class MoviesNotifier extends AsyncNotifier<void> {
     if (_isFetchingMore || _currentPage >= _totalPages) return;
     _isFetchingMore = true;
     if (kDebugMode) print('🔽 [Movies] loading more — page ${_currentPage + 1}/$_totalPages');
-    await _loadPage(_currentPage + 1);
+    final current = state.valueOrNull?.movies ?? [];
+    state = AsyncData(await _loadPage(_currentPage + 1, current: current));
     _isFetchingMore = false;
   }
 
   Future<void> refresh() async {
     if (kDebugMode) print('🔄 [Movies] refresh triggered');
     _currentPage = 1;
-    ref.invalidateSelf();
+    state = const AsyncLoading();
+    state = AsyncData(await _loadPage(1, current: []));
   }
 }
 
 final moviesNotifierProvider =
-    AsyncNotifierProvider<MoviesNotifier, void>(MoviesNotifier.new);
+    AsyncNotifierProvider<MoviesNotifier, MoviesState>(MoviesNotifier.new);
 
 final moviesListProvider = Provider<List<MovieModel>>(
-  (ref) => ref.watch(_moviesListProvider),
+  (ref) => ref.watch(moviesNotifierProvider).valueOrNull?.movies ?? [],
+);
+
+final moviesErrorProvider = Provider<String?>(
+  (ref) => ref.watch(moviesNotifierProvider).valueOrNull?.error,
 );
 
 final saveCountProvider = StreamProvider.family<int, int>((ref, tmdbId) {
@@ -72,7 +77,6 @@ final isSavedProvider = FutureProvider.family<bool, (int, int)>((ref, args) {
   return ref.watch(moviesRepositoryProvider).isSaved(userId, tmdbId);
 });
 
-final movieSaversProvider =
-    FutureProvider.family((ref, int tmdbId) {
+final movieSaversProvider = FutureProvider.family((ref, int tmdbId) {
   return ref.watch(moviesRepositoryProvider).getUsersWhoSaved(tmdbId);
 });
