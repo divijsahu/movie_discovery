@@ -11,7 +11,7 @@ class AppLogInterceptor extends Interceptor {
     _stopwatches[_key(options)] = Stopwatch()..start();
     final attempt = options.extra['retryAttempt'] as int? ?? 0;
     if (attempt > 0) {
-      print('├─ 🔁 RETRY #$attempt ${options.method} ${_shortUri(options.uri)}');
+      print('├─ 🔁 RETRY #$attempt → ${_shortUri(options.uri)}');
     } else {
       print('┌─ 🌐 ${options.method} → ${_shortUri(options.uri)}');
     }
@@ -34,12 +34,7 @@ class AppLogInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     final options = err.requestOptions;
     final elapsed = _elapsed(options);
-    final attempt = options.extra['retryAttempt'] as int? ?? 0;
     final status = err.response?.statusCode;
-
-    if (attempt > 0) {
-      print('├─ ⚠️  prev attempt failed, retrying...');
-    }
 
     final statusStr = status != null ? '$status ' : '';
     print('└─ ❌ ${options.method} ${_shortUri(options.uri)} → $statusStr${err.type.name}  ($elapsed)');
@@ -101,6 +96,19 @@ class AppLogInterceptor extends Interceptor {
       final title = data['title'];
       final year = (data['release_date'] as String?)?.substring(0, 4);
       return '   🎥 $title ($year)';
+    }
+
+    // OMDB search results
+    if (path == '/' && data['Search'] is List) {
+      final list = data['Search'] as List;
+      return '   🔍 ${list.length} results for "${uri.queryParameters['s']}';
+    }
+
+    // OMDB movie detail
+    if (path == '/' && data['Title'] != null) {
+      final title = data['Title'];
+      final year = data['Year'];
+      return '   🎬 $title ($year)';
     }
 
     return null;
