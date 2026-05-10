@@ -4,7 +4,8 @@ class RouteNames {
   static const matches = '/matches';
   static String movies(int userId) => '/users/$userId/movies';
   static String savedMovies(int userId) => '/users/$userId/saved';
-  static String movieDetail(int tmdbId) => '/movies/$tmdbId';
+  static String movieDetail(int tmdbId, {required int userId}) =>
+      '/movies/$tmdbId?userId=$userId';
 
   RouteNames._();
 }

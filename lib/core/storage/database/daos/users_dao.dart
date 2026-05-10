@@ -49,6 +49,20 @@ class UsersDao extends DatabaseAccessor<AppDatabase> with _$UsersDaoMixin {
   Future<List<UsersTableData>> getPendingSyncUsers() =>
       (select(usersTable)..where((u) => u.pendingSync.equals(true))).get();
 
-  Future<void> upsertRemoteUser(UsersTableCompanion user) =>
-      into(usersTable).insertOnConflictUpdate(user);
+  Future<void> upsertRemoteUser(UsersTableCompanion user) async {
+    // Check if a row with this serverId already exists
+    final serverId = user.serverId.value;
+    if (serverId != null) {
+      final existing = await (select(usersTable)
+            ..where((u) => u.serverId.equals(serverId)))
+          .getSingleOrNull();
+      if (existing != null) {
+        // Update in place — don't insert a duplicate
+        await (update(usersTable)..where((u) => u.serverId.equals(serverId)))
+            .write(user);
+        return;
+      }
+    }
+    await into(usersTable).insert(user);
+  }
 }

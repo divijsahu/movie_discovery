@@ -152,15 +152,16 @@ After each phase:
 ## Phase 5 — Movies Page & Movie Detail
 
 ### Dev Completed
-- [ ] `movie_model.dart` — Freezed model
-- [ ] `movies_api.dart` — fetchTrending (paginated)
-- [ ] `movies_repository.dart` — fetchTrending + cache, toggleSave, watchSaveCount
-- [ ] `movies_provider.dart` — infinite scroll
-- [ ] `movies_page.dart` — grid/list with shimmer, staggered animations
-- [ ] `movie_card.dart` — poster, title, animated save count badge, save button
-- [ ] `save_count_badge.dart` — AnimatedSwitcher scale transition
-- [ ] `movie_detail_page.dart` — SliverAppBar, Hero animation, SaversRow
-- [ ] GoRouter routes wired: `/users/:userId/movies`, `/movies/:tmdbId`
+- [x] `movie_model.dart` — Freezed model
+- [x] `movies_api.dart` — fetchTrending (paginated), fetchDetail
+- [x] `movies_repository.dart` — fetchTrending + cache, fetchDetail, toggleSave, watchSaveCount, isSaved, getUsersWhoSaved
+- [x] `movies_provider.dart` — infinite scroll, saveCountProvider, isSavedProvider, movieSaversProvider
+- [x] `movies_page.dart` — list with shimmer, staggered animations, infinite scroll
+- [x] `movie_card.dart` — poster Hero, title, animated save count badge, save button
+- [x] `save_count_badge.dart` — AnimatedSwitcher scale transition
+- [x] `movie_detail_page.dart` — SliverAppBar, Hero animation, SaversRow, shimmer
+- [x] `movie_list_shimmer.dart` — skeleton loader
+- [x] GoRouter routes wired: `/users/:userId/movies`, `/movies/:tmdbId?userId=`
 
 ### Your Checks
 - [ ] `flutter analyze` — no errors
@@ -289,7 +290,7 @@ After each phase:
 | 2 — Database Schema | ✅ Complete | ⬜ Pending |
 | 3 — Networking Layer | ✅ Complete | ⬜ Pending |
 | 4 — Users Page & Add User | ✅ Complete | ⬜ Pending |
-| 5 — Movies Page & Detail | ⬜ Not started | ⬜ Pending |
+| 5 — Movies Page & Detail | ✅ Complete | ⬜ Pending |
 | 6 — Saved Movies & Matches | ⬜ Not started | ⬜ Pending |
 | 7 — Offline Sync | ⬜ Not started | ⬜ Pending |
 | 8 — UI Polish | ⬜ Not started | ⬜ Pending |

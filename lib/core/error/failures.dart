@@ -9,7 +9,13 @@ sealed class AppFailure {
         e.type == DioExceptionType.connectionTimeout) {
       return const NetworkFailure();
     }
-    if (e.response?.statusCode == 401) return const UnauthorizedFailure();
+    if (e.response?.statusCode == 401) {
+      // Extract the actual API error message if available (e.g. TMDB invalid key)
+      final apiMessage = e.response?.data?['status_message']
+          ?? e.response?.data?['message']
+          ?? e.response?.data?['error'];
+      return UnauthorizedFailure(apiMessage?.toString());
+    }
     return ServerFailure(
       e.response?.data?['message']?.toString() ?? e.message ?? 'Server error',
       statusCode: e.response?.statusCode,
@@ -35,5 +41,6 @@ class CacheFailure extends AppFailure {
 }
 
 class UnauthorizedFailure extends AppFailure {
-  const UnauthorizedFailure() : super('Session expired. Please log in again.');
+  const UnauthorizedFailure([String? message])
+      : super(message ?? 'Invalid API key or unauthorized.');
 }

@@ -55,7 +55,26 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        // Remove duplicate remote users — keep only the row with the lowest id
+        // for each serverId, delete the rest.
+        await customStatement('''
+          DELETE FROM users_table
+          WHERE server_id IS NOT NULL
+            AND id NOT IN (
+              SELECT MIN(id) FROM users_table
+              WHERE server_id IS NOT NULL
+              GROUP BY server_id
+            )
+        ''');
+      }
+    },
+  );
 
   static QueryExecutor _openConnection() =>
       driftDatabase(name: 'movie_discovery_db');

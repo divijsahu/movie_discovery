@@ -3,7 +3,7 @@ class ApiConstants {
   static const reqresApiKey   = 'free_user_3DX5WtZgAM0j2EtH7YRbDHXMRoF';
 
   static const tmdbBase       = 'https://api.themoviedb.org/3';
-  static const tmdbApiKey     = 'YOUR_TMDB_KEY';
+  static const tmdbApiKey     = '2f72fc8ecb8781ca5b0daf124601ec90';
   static const tmdbImageSmall = 'https://image.tmdb.org/t/p/w185';
   static const tmdbImageLarge = 'https://image.tmdb.org/t/p/w500';
 

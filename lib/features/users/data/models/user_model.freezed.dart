@@ -21,7 +21,9 @@ UserModel _$UserModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$UserModel {
   int get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'first_name')
   String get firstName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'last_name')
   String get lastName => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   String get avatar => throw _privateConstructorUsedError;
@@ -42,7 +44,11 @@ abstract class $UserModelCopyWith<$Res> {
       _$UserModelCopyWithImpl<$Res, UserModel>;
   @useResult
   $Res call(
-      {int id, String firstName, String lastName, String email, String avatar});
+      {int id,
+      @JsonKey(name: 'first_name') String firstName,
+      @JsonKey(name: 'last_name') String lastName,
+      String email,
+      String avatar});
 }
 
 /// @nodoc
@@ -100,7 +106,11 @@ abstract class _$$UserModelImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {int id, String firstName, String lastName, String email, String avatar});
+      {int id,
+      @JsonKey(name: 'first_name') String firstName,
+      @JsonKey(name: 'last_name') String lastName,
+      String email,
+      String avatar});
 }
 
 /// @nodoc
@@ -148,13 +158,12 @@ class __$$UserModelImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-
-@JsonSerializable(fieldRename: FieldRename.snake)
+@JsonSerializable()
 class _$UserModelImpl implements _UserModel {
   const _$UserModelImpl(
       {required this.id,
-      required this.firstName,
-      required this.lastName,
+      @JsonKey(name: 'first_name') required this.firstName,
+      @JsonKey(name: 'last_name') required this.lastName,
       required this.email,
       required this.avatar});
 
@@ -164,8 +173,10 @@ class _$UserModelImpl implements _UserModel {
   @override
   final int id;
   @override
+  @JsonKey(name: 'first_name')
   final String firstName;
   @override
+  @JsonKey(name: 'last_name')
   final String lastName;
   @override
   final String email;
@@ -215,8 +226,8 @@ class _$UserModelImpl implements _UserModel {
 abstract class _UserModel implements UserModel {
   const factory _UserModel(
       {required final int id,
-      required final String firstName,
-      required final String lastName,
+      @JsonKey(name: 'first_name') required final String firstName,
+      @JsonKey(name: 'last_name') required final String lastName,
       required final String email,
       required final String avatar}) = _$UserModelImpl;
 
@@ -226,8 +237,10 @@ abstract class _UserModel implements UserModel {
   @override
   int get id;
   @override
+  @JsonKey(name: 'first_name')
   String get firstName;
   @override
+  @JsonKey(name: 'last_name')
   String get lastName;
   @override
   String get email;
@@ -249,6 +262,7 @@ UsersResponse _$UsersResponseFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$UsersResponse {
   int get page => throw _privateConstructorUsedError;
+  @JsonKey(name: 'total_pages')
   int get totalPages => throw _privateConstructorUsedError;
   List<UserModel> get data => throw _privateConstructorUsedError;
 
@@ -268,7 +282,10 @@ abstract class $UsersResponseCopyWith<$Res> {
           UsersResponse value, $Res Function(UsersResponse) then) =
       _$UsersResponseCopyWithImpl<$Res, UsersResponse>;
   @useResult
-  $Res call({int page, int totalPages, List<UserModel> data});
+  $Res call(
+      {int page,
+      @JsonKey(name: 'total_pages') int totalPages,
+      List<UserModel> data});
 }
 
 /// @nodoc
@@ -315,7 +332,10 @@ abstract class _$$UsersResponseImplCopyWith<$Res>
       __$$UsersResponseImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int page, int totalPages, List<UserModel> data});
+  $Res call(
+      {int page,
+      @JsonKey(name: 'total_pages') int totalPages,
+      List<UserModel> data});
 }
 
 /// @nodoc
@@ -353,12 +373,11 @@ class __$$UsersResponseImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-
-@JsonSerializable(fieldRename: FieldRename.snake)
+@JsonSerializable()
 class _$UsersResponseImpl implements _UsersResponse {
   const _$UsersResponseImpl(
       {required this.page,
-      required this.totalPages,
+      @JsonKey(name: 'total_pages') required this.totalPages,
       required final List<UserModel> data})
       : _data = data;
 
@@ -368,6 +387,7 @@ class _$UsersResponseImpl implements _UsersResponse {
   @override
   final int page;
   @override
+  @JsonKey(name: 'total_pages')
   final int totalPages;
   final List<UserModel> _data;
   @override
@@ -417,7 +437,7 @@ class _$UsersResponseImpl implements _UsersResponse {
 abstract class _UsersResponse implements UsersResponse {
   const factory _UsersResponse(
       {required final int page,
-      required final int totalPages,
+      @JsonKey(name: 'total_pages') required final int totalPages,
       required final List<UserModel> data}) = _$UsersResponseImpl;
 
   factory _UsersResponse.fromJson(Map<String, dynamic> json) =
@@ -426,6 +446,7 @@ abstract class _UsersResponse implements UsersResponse {
   @override
   int get page;
   @override
+  @JsonKey(name: 'total_pages')
   int get totalPages;
   @override
   List<UserModel> get data;
