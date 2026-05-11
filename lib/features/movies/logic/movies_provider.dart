@@ -80,3 +80,12 @@ final isSavedProvider = FutureProvider.family<bool, (int, int)>((ref, args) {
 final movieSaversProvider = FutureProvider.family((ref, int tmdbId) {
   return ref.watch(moviesRepositoryProvider).getUsersWhoSaved(tmdbId);
 });
+
+final movieDetailProvider = FutureProvider.family((ref, int tmdbId) async {
+  final result =
+      await ref.watch(moviesRepositoryProvider).fetchDetail(tmdbId);
+  return result.when(
+    success: (m) => m,
+    failure: (f) => throw f.message,
+  );
+});

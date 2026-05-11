@@ -52,14 +52,18 @@ class MoviesRepository {
 
   Future<void> _cacheMovies(List<MovieModel> movies) async {
     for (final movie in movies) {
-      await _db.moviesDao.upsertMovie(MoviesTableCompanion.insert(
-        tmdbId: movie.id,
-        title: movie.title,
-        overview: Value(movie.overview),
-        posterPath: Value(movie.posterPath),
-        releaseDate: Value(movie.releaseDate),
-        popularity: Value(movie.popularity),
-      ));
+      try {
+        await _db.moviesDao.upsertMovie(MoviesTableCompanion.insert(
+          tmdbId: movie.id,
+          title: movie.title,
+          overview: Value(movie.overview),
+          posterPath: Value(movie.posterPath),
+          releaseDate: Value(movie.releaseDate),
+          popularity: Value(movie.popularity),
+        ));
+      } catch (e) {
+        if (kDebugMode) print('⚠️  [Movies] cache failed for "${movie.title}" (id=${movie.id}): $e');
+      }
     }
   }
 

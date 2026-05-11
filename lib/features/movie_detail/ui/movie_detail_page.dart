@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:movie_discovery/core/error/result.dart';
 import 'package:movie_discovery/core/network/api_constants.dart';
 import 'package:movie_discovery/design_system/app_colors.dart';
 import 'package:movie_discovery/design_system/app_spacing.dart';
@@ -10,6 +9,12 @@ import 'package:movie_discovery/design_system/widgets/empty_state.dart';
 import 'package:movie_discovery/design_system/widgets/shimmer/shimmer_box.dart';
 import 'package:movie_discovery/features/movies/data/movies_repository.dart';
 import 'package:movie_discovery/features/movies/logic/movies_provider.dart';
+
+String _detailPosterUrl(String? path) {
+  if (path == null || path.isEmpty) return '';
+  if (path.startsWith('http')) return path; // OMDB full URL
+  return '${ApiConstants.tmdbImageLarge}$path'; // TMDB relative path
+}
 
 class MovieDetailPage extends ConsumerWidget {
   final int tmdbId;
@@ -23,99 +28,82 @@ class MovieDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final detailAsync = ref.watch(
-      FutureProvider((ref) async {
-        final result =
-            await ref.watch(moviesRepositoryProvider).fetchDetail(tmdbId);
-        return result.when(
-          success: (m) => m,
-          failure: (f) => throw f.message,
-        );
-      }).future,
-    );
+    final detailAsync = ref.watch(movieDetailProvider(tmdbId));
     final isSavedAsync = ref.watch(isSavedProvider((activeUserId, tmdbId)));
 
     return Scaffold(
-      body: FutureBuilder(
-        future: detailAsync,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const _DetailShimmer();
-          }
-          if (snapshot.hasError || !snapshot.hasData) {
-            return const EmptyState(
-              title: 'Could not load movie',
-              subtitle: 'Check your connection and try again.',
-            );
-          }
-          final movie = snapshot.data!;
-          return CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 340,
-                pinned: true,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    movie.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  background: Hero(
-                    tag: 'movie_poster_$tmdbId',
-                    child: AppNetworkImage(
-                      url: '${ApiConstants.tmdbImageLarge}${movie.posterPath}',
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
+      body: detailAsync.when(
+        loading: () => const _DetailShimmer(),
+        error: (e, _) => const EmptyState(
+          title: 'Could not load movie',
+          subtitle: 'Check your connection and try again.',
+        ),
+        data: (movie) => CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 340,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(
+                  movie.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 14),
+                ),
+                background: Hero(
+                  tag: 'movie_poster_$tmdbId',
+                  child: AppNetworkImage(
+                    url: _detailPosterUrl(movie.posterPath),
+                    width: double.infinity,
+                    fit: BoxFit.cover,
                   ),
                 ),
-                actions: [
-                  isSavedAsync.when(
-                    data: (saved) => IconButton(
-                      icon: Icon(
-                        saved
-                            ? Icons.bookmark_rounded
-                            : Icons.bookmark_border_rounded,
-                        color: Colors.white,
+              ),
+              actions: [
+                isSavedAsync.when(
+                  data: (saved) => IconButton(
+                    icon: Icon(
+                      saved
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: () async {
+                      await ref
+                          .read(moviesRepositoryProvider)
+                          .toggleSave(activeUserId, tmdbId);
+                      ref.invalidate(
+                          isSavedProvider((activeUserId, tmdbId)));
+                    },
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ],
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: AppSpacing.screen,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (movie.releaseDate != null)
+                      Text(
+                        movie.releaseDate!,
+                        style: AppTextStyles.caption
+                            .copyWith(color: AppColors.grey500),
                       ),
-                      onPressed: () async {
-                        await ref
-                            .read(moviesRepositoryProvider)
-                            .toggleSave(activeUserId, tmdbId);
-                        ref.invalidate(
-                            isSavedProvider((activeUserId, tmdbId)));
-                      },
-                    ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: AppSpacing.screen,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (movie.releaseDate != null)
-                        Text(
-                          movie.releaseDate!,
-                          style: AppTextStyles.caption
-                              .copyWith(color: AppColors.grey500),
-                        ),
-                      const SizedBox(height: AppSpacing.md),
-                      if (movie.overview != null)
-                        Text(movie.overview!, style: AppTextStyles.body),
-                      const SizedBox(height: AppSpacing.lg),
-                      _SaversRow(tmdbId: tmdbId),
-                    ],
-                  ),
+                    const SizedBox(height: AppSpacing.md),
+                    if (movie.overview != null)
+                      Text(movie.overview!, style: AppTextStyles.body),
+                    const SizedBox(height: AppSpacing.lg),
+                    _SaversRow(tmdbId: tmdbId),
+                  ],
                 ),
               ),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
       ),
     );
   }
