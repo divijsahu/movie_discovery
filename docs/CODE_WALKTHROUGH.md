@@ -96,9 +96,10 @@ A single class holding every base URL, API key placeholder, and endpoint path. N
 static String movieDetail(int id) => '/movie/$id';
 ```
 
-Two APIs are used:
-- **Reqres** (`reqres.in`) — for users (fake REST API, free, no auth needed beyond an API key header)
+Three APIs are used:
+- **Reqres** (`reqres.in`) — for users (fake REST API, free, requires an API key header)
 - **TMDB** (`api.themoviedb.org/3`) — for movies (real movie database)
+- **OMDB** (`omdbapi.com`) — fallback when TMDB is unavailable
 
 ---
 
@@ -227,7 +228,7 @@ class AppDatabase extends _$AppDatabase { ... }
 
 The `@DriftDatabase` annotation tells the code generator which tables and DAOs to wire together. `_$AppDatabase` is the generated base class.
 
-`schemaVersion: 1` — when you add columns or tables in the future, you increment this and write a migration in `onUpgrade`.
+`schemaVersion: 2` — v2 migration runs a `DELETE` that keeps only the lowest-`id` row per `serverId`, cleaning up duplicate remote users that were inserted before the `upsertRemoteUser` fix.
 
 **3. Exposes a Riverpod provider:**
 
@@ -346,7 +347,7 @@ lib/core/storage/database/daos/movies_dao.dart
 
 Intentionally simple — movies are read-only from the app's perspective (you can't create or delete movies, only save/unsave them).
 
-**`upsertMovie()`** — inserts or updates a movie by its `tmdbId` unique constraint. Called every time trending movies are fetched from TMDB, keeping the local cache fresh.
+**`upsertMovie()`** — checks for an existing row by `tmdbId` first. If found, updates in place. If not, inserts. This is necessary because `insertOnConflictUpdate` in Drift conflicts on the primary key (`id`), not the `tmdbId` unique column — so a naive upsert would hit the unique constraint and throw on re-insert.
 
 **`getMovieByTmdbId()`** — looks up a movie by its TMDB ID. Used in `MoviesRepository.toggleSave()` to resolve the TMDB ID (from the API response) to the local `id` (needed for the `SavedMoviesTable` foreign key).
 
@@ -612,7 +613,7 @@ The poster is wrapped in a `Hero` with tag `movie_poster_${movie.id}` — this m
 
 ### Movie Detail Page — `features/movie_detail/ui/movie_detail_page.dart`
 
-Uses an inline `FutureProvider` inside `ref.watch` to fetch the detail — the `Result` is unwrapped inside the provider so `FutureBuilder` receives a `MovieModel` directly.
+Uses `movieDetailProvider(tmdbId)` — a `FutureProvider.family` defined in `movies_provider.dart` — to fetch the detail. Riverpod caches the result by `tmdbId` so the fetch only fires once regardless of rebuilds.
 
 The `SliverAppBar` with `expandedHeight: 340` and `pinned: true` keeps the title visible while scrolling. The `Hero` widget wraps the background image — Flutter matches it to the card's Hero by tag and animates between them.
 
@@ -679,11 +680,168 @@ The save count badge on each user tile is now wrapped in a `GestureDetector` tha
 
 ---
 
-## What's Next
+## Phase 7 — Offline Sync (WorkManager)
 
-| Phase | What it adds |
-|---|---|
-| **Phase 7** | WorkManager background sync for offline-created users |
-| **Phase 8** | UI polish — shimmer, staggered animations, Hero, animated badge |
-| **Phase 9** | ReconnectingBar + retry interceptor fully wired |
-| **Phase 10** | Release build + README |
+The goal of Phase 7 is to ensure users created while offline are automatically POSTed to Reqres the next time the app has connectivity — with zero data loss and no duplicates.
+
+---
+
+### `runPendingUserSync()` — `core/sync/sync_worker.dart`
+
+The sync logic lives in a standalone top-level function (not a class method) so it can be called from two places:
+1. The WorkManager background isolate via `callbackDispatcher`
+2. `main.dart` on every app launch if online
+
+This is important because WorkManager on iOS requires `BGTaskSchedulerPermittedIdentifiers` registered in `Info.plist` to schedule background tasks. Without that, the WorkManager call throws a `PlatformException`. The launch sync covers this gap — even if the background task never fires, the sync happens the next time the user opens the app.
+
+The function opens its own `AppDatabase` and `Dio` instances directly — Riverpod is not available in a background isolate. It reads all rows where `pendingSync = true`, POSTs each to Reqres, then calls `updateServerId` + `markSynced`. If an individual POST fails, the row stays `pendingSync = true` and WorkManager retries the task automatically.
+
+**`callbackDispatcher`** is annotated `@pragma('vm:entry-point')` — required so the Dart compiler doesn't tree-shake it, since it's called from native code in a separate isolate.
+
+---
+
+### Launch sync — `main.dart`
+
+`_syncOnLaunch()` is called in `main()` before `runApp`. It checks connectivity first — if offline it skips silently. If online, it calls `runPendingUserSync()`. This means:
+- On Android: both the launch sync and WorkManager background task can fire
+- On iOS: only the launch sync fires reliably
+
+The `⟳` sync icon disappears from the user tile as soon as `markSynced` clears the `pendingSync` flag, because the users list is a live DB stream.
+
+---
+
+## Phase 8 — UI Polish
+
+The goal of Phase 8 is to make the app feel native and polished — smooth animations, correct shimmer in dark mode, responsive feedback on every interaction.
+
+---
+
+### Dark-mode aware shimmer — `ShimmerBox`
+
+The original `ShimmerBox` used hardcoded `Colors.grey[300]`/`Colors.grey[100]` which looked jarring in dark mode (bright white rectangles on a dark background). Now reads `Theme.of(context).brightness` and switches to `Colors.grey[800]`/`Colors.grey[700]` in dark mode.
+
+---
+
+### Animated `ReconnectingBar`
+
+Replaced the abrupt `if (isOnline) return SizedBox.shrink()` with `AnimatedSlide` + `AnimatedOpacity`. The bar slides down from above when connectivity is lost and slides back up while fading out when restored. Duration is 300ms with `Curves.easeInOut`.
+
+---
+
+### Stale bookmark icon fix
+
+`isSavedProvider` is a `FutureProvider` — it runs once and caches the result. After `toggleSave`, the icon wouldn't flip until something caused the provider to rebuild. Fixed by calling `ref.invalidate(isSavedProvider((userId, tmdbId)))` immediately after `toggleSave` in both `MovieCard` and `MovieDetailPage`. This forces a fresh DB read and the icon flips instantly.
+
+---
+
+### OMDB poster URL fix — `_posterUrl()` helper
+
+OMDB returns full `https://` poster URLs. TMDB returns relative paths like `/abc123.jpg` that need the base URL prepended. The `_posterUrl()` helper checks `path.startsWith('http')` — if true, returns as-is; otherwise prepends `ApiConstants.tmdbImageSmall`. Applied to `MovieCard`, `SavedMoviesPage`, and `MatchMovieTile`.
+
+---
+
+### `BouncingScrollPhysics`
+
+Added to all four list views (users, movies, saved movies, matches) for the native iOS rubber-band bounce feel at the top and bottom of lists.
+
+---
+
+### `movieDetailProvider` family
+
+The original detail page used an inline `FutureProvider((ref) async {...})` created inside `build()`. Every rebuild created a new provider instance, causing duplicate API calls. Replaced with `movieDetailProvider` as a proper `FutureProvider.family` in `movies_provider.dart` — Riverpod caches it by `tmdbId`, so the fetch only happens once regardless of how many widgets watch it.
+
+---
+
+## Phase 9 — Bad Connection Handling
+
+The goal of Phase 9 is to ensure the app degrades gracefully on poor or no connectivity — silent retries, visible feedback, and accurate error states.
+
+---
+
+### `RetryInterceptor` — already built in Phase 3, verified here
+
+- Retries GET requests up to 3 times with exponential backoff: 1s → 3s → 6s
+- POST/PATCH/PUT are never retried — prevents duplicate mutations
+- Uses a plain inner `Dio` instance with no interceptors to avoid re-triggering itself
+- Retry log fires in `onRequest` (before the retry) not `onError` (after), so the console reads in chronological order
+
+---
+
+### `ReconnectingBar` on all pages
+
+Phases 4–6 added `ReconnectingBar` to `UsersPage` and `MoviesPage`. Phase 9 adds it to `SavedMoviesPage` and `MatchesPage` — now all four pages show the animated orange bar when connectivity is lost.
+
+---
+
+### Error states
+
+The movies page shows a `"Could not load movies"` error with the actual API failure message and a Retry button — but only when the movie list is empty. If there are cached movies, the error is swallowed silently and the cached list is shown. This is the correct UX: don't interrupt the user with an error if they already have data to look at.
+
+---
+
+## Phase 10 — Final Polish & Submission
+
+---
+
+### README
+
+Completely rewritten from the old template boilerplate. Contains: pages table, step-by-step setup with exact file paths for API keys, architecture tree, key features section, API keys table with signup links, database schema, sample console output, and build commands.
+
+---
+
+### `.env.example`
+
+Replaced the generic template file with just the 3 keys this project uses (Reqres, TMDB, OMDB), each with a direct link to where to get them.
+
+---
+
+### GitHub Actions — `.github/workflows/`
+
+Three separate workflow files:
+
+**`code_quality.yml`** — auto-runs on every push/PR to `main`/`develop`:
+- `flutter analyze --fatal-infos --fatal-warnings`
+- `dart format --set-exit-if-changed lib/`
+- `concurrency` group cancels in-progress runs on the same branch
+
+**`tests.yml`** — manual trigger (`workflow_dispatch`):
+- Optional Flutter version input
+- `flutter test --coverage`
+- Writes a summary table to the Actions run page
+
+**`build_apk.yml`** — manual trigger:
+- Builds unsigned release APK
+- Renames to `MD {version} +{build}.apk` (e.g. `MD 1.0.0 +1.apk`)
+- Creates and pushes a git tag (`v1.0.0+1`)
+- Creates a GitHub Release with the APK attached as a downloadable asset
+- Uploads APK as a workflow artifact (configurable retention)
+- Cleanup job deletes artifacts older than the retention period
+
+---
+
+## Branding — App Icon & Native Splash
+
+---
+
+### App Icon — `flutter_launcher_icons`
+
+Configured in `pubspec.yaml` under `flutter_launcher_icons`. Points to `assets/icons/app_icon.png` (1080×1080 Movie Discovery logo). Running `dart run flutter_launcher_icons` generates all required sizes:
+- **Android**: `mipmap-mdpi` through `mipmap-xxxhdpi` in `android/app/src/main/res/`
+- **iOS**: all sizes in `ios/Runner/Assets.xcassets/AppIcon.appiconset/`
+
+Web, Windows, and macOS generation is disabled (`generate: false`) since this is a mobile-only app.
+
+---
+
+### Native Splash Screen — `flutter_native_splash`
+
+Configured in `pubspec.yaml` under `flutter_native_splash`. Uses the same `app_icon.png` centered on a pure black (`#000000`) background — matching the icon's outer border for a seamless look.
+
+Running `dart run flutter_native_splash:create` generates:
+- **Android**: `launch_background.xml` drawables + `styles.xml` entries for all density buckets
+- **Android 12+**: dedicated `android12splash` drawables using the new `SplashScreen` API
+- **iOS**: `LaunchImage` assets + `LaunchScreen.storyboard` background color
+
+**`FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding)`** is called at the very start of `main()` — this keeps the native splash visible while WorkManager initialises and `_syncOnLaunch()` runs. **`FlutterNativeSplash.remove()`** is called just before `runApp` — Flutter takes over at that exact moment with no gap.
+
+**Black background fix** — the `NormalTheme` in all four Android styles files (`values`, `values-night`, `values-v31`, `values-night-v31`) had `windowBackground` set to `?android:colorBackground` which resolves to the system's light/dark background color. This caused a brief bluish flash between the splash and Flutter's first frame. Fixed by hardcoding `#000000` in all four files. The iOS `LaunchScreen.storyboard` `backgroundColor` was also changed from white `(1,1,1)` to black `(0,0,0)`.
