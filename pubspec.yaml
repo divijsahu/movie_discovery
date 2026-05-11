@@ -42,6 +42,7 @@ dependencies:
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   flutter_animate: ^4.5.0
+  flutter_native_splash: ^2.4.3
 
   cupertino_icons: ^1.0.6
 
@@ -55,6 +56,33 @@ dev_dependencies:
   riverpod_generator: ^2.4.3
   drift_dev: ^2.20.3
   mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false
+
+flutter_native_splash:
+  color: "#000000"
+  color_dark: "#000000"
+  image: assets/icons/app_icon.png
+  image_dark: assets/icons/app_icon.png
+  android_12:
+    image: assets/icons/app_icon.png
+    icon_background_color: "#000000"
+    color: "#000000"
+    color_dark: "#000000"
+  android: true
+  ios: true
+  web: false
 
 flutter:
   uses-material-design: true
