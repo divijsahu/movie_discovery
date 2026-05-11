@@ -4,7 +4,7 @@ import 'package:movie_discovery/core/network/api_constants.dart';
 import 'package:movie_discovery/core/storage/database/app_database.dart';
 import 'package:workmanager/workmanager.dart';
 
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, curly_braces_in_flow_control_structures
 
 class SyncWorker {
   static const taskName = 'sync_pending_users';
@@ -24,7 +24,8 @@ Future<bool> runPendingUserSync() async {
     baseUrl: ApiConstants.reqresBase,
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 15),
-  ))..interceptors.add(InterceptorsWrapper(
+  ))
+    ..interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         options.headers['x-api-key'] = ApiConstants.reqresApiKey;
         handler.next(options);
@@ -33,7 +34,8 @@ Future<bool> runPendingUserSync() async {
 
   try {
     final pending = await db.usersDao.getPendingSyncUsers();
-    if (kDebugMode) print('🔄 [Sync] ${pending.length} pending user(s) to sync');
+    if (kDebugMode)
+      print('🔄 [Sync] ${pending.length} pending user(s) to sync');
 
     for (final user in pending) {
       try {
@@ -46,7 +48,8 @@ Future<bool> runPendingUserSync() async {
           await db.usersDao.updateServerId(user.id, serverId);
         }
         await db.usersDao.markSynced(user.id);
-        if (kDebugMode) print('☁️  [Sync] synced "${user.name}" → serverId=$serverId');
+        if (kDebugMode)
+          print('☁️  [Sync] synced "${user.name}" → serverId=$serverId');
       } catch (e) {
         if (kDebugMode) print('⚠️  [Sync] failed to sync "${user.name}": $e');
       }

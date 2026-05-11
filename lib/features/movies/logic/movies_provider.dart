@@ -5,7 +5,7 @@ import 'package:movie_discovery/core/error/result.dart';
 import 'package:movie_discovery/features/movies/data/movies_repository.dart';
 import 'package:movie_discovery/features/movies/data/models/movie_model.dart';
 
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, curly_braces_in_flow_control_structures
 
 typedef MoviesState = ({List<MovieModel> movies, String? error});
 
@@ -20,16 +20,18 @@ class MoviesNotifier extends AsyncNotifier<MoviesState> {
     return _loadPage(1, current: []);
   }
 
-  Future<MoviesState> _loadPage(int page, {required List<MovieModel> current}) async {
+  Future<MoviesState> _loadPage(int page,
+      {required List<MovieModel> current}) async {
     final result = await ref.read(moviesRepositoryProvider).fetchTrending(page);
     return result.when(
       success: (response) {
         _totalPages = response.totalPages;
         _currentPage = response.page;
-        final updated = page == 1
-            ? response.results
-            : [...current, ...response.results];
-        if (kDebugMode) print('📊 [Movies] page $_currentPage/$_totalPages loaded — ${response.results.length} movies');
+        final updated =
+            page == 1 ? response.results : [...current, ...response.results];
+        if (kDebugMode)
+          print(
+              '📊 [Movies] page $_currentPage/$_totalPages loaded — ${response.results.length} movies');
         return (movies: updated, error: null);
       },
       failure: (f) {
@@ -43,7 +45,8 @@ class MoviesNotifier extends AsyncNotifier<MoviesState> {
   Future<void> loadMore() async {
     if (_isFetchingMore || _currentPage >= _totalPages) return;
     _isFetchingMore = true;
-    if (kDebugMode) print('🔽 [Movies] loading more — page ${_currentPage + 1}/$_totalPages');
+    if (kDebugMode)
+      print('🔽 [Movies] loading more — page ${_currentPage + 1}/$_totalPages');
     final current = state.valueOrNull?.movies ?? [];
     state = AsyncData(await _loadPage(_currentPage + 1, current: current));
     _isFetchingMore = false;
@@ -82,8 +85,7 @@ final movieSaversProvider = FutureProvider.family((ref, int tmdbId) {
 });
 
 final movieDetailProvider = FutureProvider.family((ref, int tmdbId) async {
-  final result =
-      await ref.watch(moviesRepositoryProvider).fetchDetail(tmdbId);
+  final result = await ref.watch(moviesRepositoryProvider).fetchDetail(tmdbId);
   return result.when(
     success: (m) => m,
     failure: (f) => throw f.message,

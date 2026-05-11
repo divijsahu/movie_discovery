@@ -70,8 +70,7 @@ class MatchMovieTile extends StatelessWidget {
           ),
           if (isTopPick)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.secondary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),

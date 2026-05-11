@@ -9,7 +9,7 @@ import 'package:movie_discovery/features/movies/data/models/movie_model.dart';
 import 'package:movie_discovery/features/movies/data/movies_api.dart';
 import 'package:movie_discovery/features/movies/data/omdb_api.dart';
 
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, curly_braces_in_flow_control_structures
 
 // Matches the number of search terms in OmdbApi so pagination stops correctly
 const _searchTermsCount = 20;
@@ -26,19 +26,27 @@ class MoviesRepository {
     try {
       final response = await _tmdb.fetchTrending(page);
       await _cacheMovies(response.results);
-      if (kDebugMode) print('💾 [Movies] cached ${response.results.length} movies to DB  (page ${response.page}/${response.totalPages})');
+      if (kDebugMode)
+        print(
+            '💾 [Movies] cached ${response.results.length} movies to DB  (page ${response.page}/${response.totalPages})');
       return Success(response);
     } on DioException catch (e) {
-      if (kDebugMode) print('⚠️  [Movies] TMDB failed (${e.type.name}) — trying OMDB fallback...');
+      if (kDebugMode)
+        print(
+            '⚠️  [Movies] TMDB failed (${e.type.name}) — trying OMDB fallback...');
     }
 
     // OMDB fallback
     try {
       final movies = await _omdb.fetchPopular(page);
-      if (kDebugMode) print('📊 [Movies] OMDB returned ${movies.length} movies for page $page');
+      if (kDebugMode)
+        print(
+            '📊 [Movies] OMDB returned ${movies.length} movies for page $page');
       if (movies.isEmpty) return const Failure(NetworkFailure());
       await _cacheMovies(movies);
-      if (kDebugMode) print('💾 [Movies] OMDB fallback: cached ${movies.length} movies to DB');
+      if (kDebugMode)
+        print(
+            '💾 [Movies] OMDB fallback: cached ${movies.length} movies to DB');
       return Success(MoviesPageResponse(
         page: page,
         totalPages: _searchTermsCount,
@@ -62,7 +70,9 @@ class MoviesRepository {
           popularity: Value(movie.popularity),
         ));
       } catch (e) {
-        if (kDebugMode) print('⚠️  [Movies] cache failed for "${movie.title}" (id=${movie.id}): $e');
+        if (kDebugMode)
+          print(
+              '⚠️  [Movies] cache failed for "${movie.title}" (id=${movie.id}): $e');
       }
     }
   }
@@ -110,16 +120,21 @@ class MoviesRepository {
         await _db.savedMoviesDao.isMovieSavedByUser(userId, movie.id);
     if (isSaved) {
       await _db.savedMoviesDao.unsaveMovie(userId, movie.id);
-      if (kDebugMode) print('🔖 [Movies] unsaved tmdbId=$tmdbId for userId=$userId');
+      if (kDebugMode)
+        print('🔖 [Movies] unsaved tmdbId=$tmdbId for userId=$userId');
     } else {
       await _db.savedMoviesDao.saveMovie(userId, movie.id);
-      if (kDebugMode) print('🔖 [Movies] saved tmdbId=$tmdbId for userId=$userId');
+      if (kDebugMode)
+        print('🔖 [Movies] saved tmdbId=$tmdbId for userId=$userId');
     }
   }
 
   Stream<int> watchSaveCount(int tmdbId) async* {
     final movie = await _db.moviesDao.getMovieByTmdbId(tmdbId);
-    if (movie == null) { yield 0; return; }
+    if (movie == null) {
+      yield 0;
+      return;
+    }
     yield* _db.savedMoviesDao.watchSaveCountForMovie(movie.id);
   }
 

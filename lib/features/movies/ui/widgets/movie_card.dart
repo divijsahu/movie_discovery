@@ -63,8 +63,8 @@ class MovieCard extends ConsumerWidget {
                 if (movie.releaseDate != null && movie.releaseDate!.length >= 4)
                   Text(
                     movie.releaseDate!.substring(0, 4),
-                    style:
-                        AppTextStyles.caption.copyWith(color: AppColors.grey500),
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.grey500),
                   ),
               ],
             ),

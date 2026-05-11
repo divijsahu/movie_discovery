@@ -90,8 +90,8 @@ class SavedMoviesDao extends DatabaseAccessor<AppDatabase>
 
   Future<bool> isMovieSavedByUser(int userId, int movieLocalId) async {
     final result = await (select(savedMoviesTable)
-          ..where((s) =>
-              s.userId.equals(userId) & s.movieId.equals(movieLocalId)))
+          ..where(
+              (s) => s.userId.equals(userId) & s.movieId.equals(movieLocalId)))
         .getSingleOrNull();
     return result != null;
   }

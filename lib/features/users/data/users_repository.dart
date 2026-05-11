@@ -32,7 +32,8 @@ class UsersRepository {
         ));
       }
       if (kDebugMode) {
-        print('💾 [Users] cached ${response.data.length} users to DB  (page ${response.page}/${response.totalPages})');
+        print(
+            '💾 [Users] cached ${response.data.length} users to DB  (page ${response.page}/${response.totalPages})');
       }
       return Success(response);
     } on DioException catch (e) {

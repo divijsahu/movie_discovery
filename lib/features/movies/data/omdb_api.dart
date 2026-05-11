@@ -4,15 +4,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movie_discovery/core/network/dio_client.dart';
 import 'package:movie_discovery/features/movies/data/models/movie_model.dart';
 
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, curly_braces_in_flow_control_structures
 
 // Curated search terms rotated by page to simulate a trending list.
 // OMDB returns up to 10 results per search; we pick one term per page.
 const _searchTerms = [
-  'avengers', 'batman', 'spider', 'star wars', 'jurassic',
-  'mission impossible', 'fast furious', 'inception', 'interstellar',
-  'dark knight', 'iron man', 'thor', 'captain america', 'guardians',
-  'matrix', 'john wick', 'mad max', 'alien', 'terminator', 'predator',
+  'avengers',
+  'batman',
+  'spider',
+  'star wars',
+  'jurassic',
+  'mission impossible',
+  'fast furious',
+  'inception',
+  'interstellar',
+  'dark knight',
+  'iron man',
+  'thor',
+  'captain america',
+  'guardians',
+  'matrix',
+  'john wick',
+  'mad max',
+  'alien',
+  'terminator',
+  'predator',
 ];
 
 class OmdbApi {
@@ -42,7 +58,8 @@ class OmdbApi {
         final detail = await _fetchDetail(item['imdbID'] as String);
         if (detail != null) movies.add(detail);
       } catch (e) {
-        if (kDebugMode) print('⚠️  [OMDB] detail fetch failed for ${item['imdbID']}: $e');
+        if (kDebugMode)
+          print('⚠️  [OMDB] detail fetch failed for ${item['imdbID']}: $e');
       }
     }
     return movies;

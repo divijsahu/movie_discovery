@@ -43,7 +43,8 @@ class SavedMoviesPage extends ConsumerWidget {
                   return EmptyState(
                     icon: Icons.bookmark_border_rounded,
                     title: 'No saved movies yet',
-                    subtitle: 'Browse trending movies and bookmark the ones you want to watch.',
+                    subtitle:
+                        'Browse trending movies and bookmark the ones you want to watch.',
                     action: TextButton.icon(
                       onPressed: () => context.push(RouteNames.movies(userId)),
                       icon: const Icon(Icons.movie_outlined),

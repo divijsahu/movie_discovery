@@ -8,7 +8,7 @@ import 'package:movie_discovery/core/sync/sync_worker.dart';
 import 'package:movie_discovery/core/utils/connectivity_service.dart';
 import 'package:movie_discovery/features/users/data/users_api.dart';
 
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, curly_braces_in_flow_control_structures
 
 class AddUserNotifier extends AsyncNotifier<void> {
   @override
@@ -23,7 +23,8 @@ class AddUserNotifier extends AsyncNotifier<void> {
     final isOnline = await ref.read(isOnlineProvider.future);
     final db = ref.read(appDatabaseProvider);
 
-    if (kDebugMode) print('\n👤 [AddUser] submitting "$name" — online: $isOnline');
+    if (kDebugMode)
+      print('\n👤 [AddUser] submitting "$name" — online: $isOnline');
 
     final localId = await db.usersDao.insertUser(
       UsersTableCompanion.insert(
@@ -32,7 +33,9 @@ class AddUserNotifier extends AsyncNotifier<void> {
         pendingSync: Value(!isOnline),
       ),
     );
-    if (kDebugMode) print('💾 [AddUser] saved locally  (localId=$localId, pendingSync=${!isOnline})');
+    if (kDebugMode)
+      print(
+          '💾 [AddUser] saved locally  (localId=$localId, pendingSync=${!isOnline})');
 
     if (isOnline) {
       try {
@@ -41,12 +44,15 @@ class AddUserNotifier extends AsyncNotifier<void> {
         final serverId = response['id']?.toString();
         if (serverId != null) {
           await db.usersDao.updateServerId(localId, serverId);
-          if (kDebugMode) print('☁️  [AddUser] synced to Reqres  (serverId=$serverId)');
+          if (kDebugMode)
+            print('☁️  [AddUser] synced to Reqres  (serverId=$serverId)');
         }
       } catch (e) {
         // POST failed mid-flight — mark as pending so sync worker picks it up
         await db.usersDao.markPendingSync(localId);
-        if (kDebugMode) print('⚠️  [AddUser] POST failed — marked pendingSync=true, scheduling background sync');
+        if (kDebugMode)
+          print(
+              '⚠️  [AddUser] POST failed — marked pendingSync=true, scheduling background sync');
         await _scheduleSync(localId);
       }
     } else {
@@ -65,11 +71,15 @@ class AddUserNotifier extends AsyncNotifier<void> {
         constraints: Constraints(networkType: NetworkType.connected),
         existingWorkPolicy: ExistingWorkPolicy.keep,
       );
-      if (kDebugMode) print('📵 [AddUser] offline — WorkManager task queued for localId=$localId');
+      if (kDebugMode)
+        print(
+            '📵 [AddUser] offline — WorkManager task queued for localId=$localId');
     } catch (e) {
       // WorkManager is Android-only; iOS BGTask requires Info.plist registration.
       // The user is already saved locally — sync will happen on next app open.
-      if (kDebugMode) print('⚠️  [AddUser] WorkManager unavailable (iOS?) — will sync on next launch: $e');
+      if (kDebugMode)
+        print(
+            '⚠️  [AddUser] WorkManager unavailable (iOS?) — will sync on next launch: $e');
     }
   }
 }

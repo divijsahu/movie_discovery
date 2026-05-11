@@ -26,12 +26,17 @@ class EmptyState extends StatelessWidget {
           children: [
             Icon(icon, size: 56, color: Colors.grey[400]),
             const SizedBox(height: 16),
-            Text(title, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
+            Text(title,
+                style: Theme.of(context).textTheme.titleMedium,
+                textAlign: TextAlign.center),
             if (subtitle != null || message != null) ...[
               const SizedBox(height: 8),
               Text(
                 subtitle ?? message ?? '',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
             ],

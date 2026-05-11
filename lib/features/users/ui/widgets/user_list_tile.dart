@@ -20,9 +20,7 @@ class UserListTile extends StatelessWidget {
         radius: 22,
         backgroundImage:
             user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
-        child: user.avatarUrl == null
-            ? Text(user.name[0].toUpperCase())
-            : null,
+        child: user.avatarUrl == null ? Text(user.name[0].toUpperCase()) : null,
       ),
       title: Row(
         children: [
@@ -48,8 +46,7 @@ class UserListTile extends StatelessWidget {
           ? GestureDetector(
               onTap: () => context.push(RouteNames.savedMovies(user.id)),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),

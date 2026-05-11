@@ -11,9 +11,9 @@ sealed class AppFailure {
     }
     if (e.response?.statusCode == 401) {
       // Extract the actual API error message if available (e.g. TMDB invalid key)
-      final apiMessage = e.response?.data?['status_message']
-          ?? e.response?.data?['message']
-          ?? e.response?.data?['error'];
+      final apiMessage = e.response?.data?['status_message'] ??
+          e.response?.data?['message'] ??
+          e.response?.data?['error'];
       return UnauthorizedFailure(apiMessage?.toString());
     }
     return ServerFailure(

@@ -72,8 +72,7 @@ class MovieDetailPage extends ConsumerWidget {
                       await ref
                           .read(moviesRepositoryProvider)
                           .toggleSave(activeUserId, tmdbId);
-                      ref.invalidate(
-                          isSavedProvider((activeUserId, tmdbId)));
+                      ref.invalidate(isSavedProvider((activeUserId, tmdbId)));
                     },
                   ),
                   loading: () => const SizedBox.shrink(),

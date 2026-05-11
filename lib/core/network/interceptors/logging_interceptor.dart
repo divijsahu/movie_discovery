@@ -25,7 +25,8 @@ class AppLogInterceptor extends Interceptor {
     final status = response.statusCode;
     final summary = _summarise(options.uri, response.data);
 
-    print('└─ ✅ ${options.method} ${_shortUri(options.uri)} → $status  ($elapsed)');
+    print(
+        '└─ ✅ ${options.method} ${_shortUri(options.uri)} → $status  ($elapsed)');
     if (summary != null) print('   $summary');
     handler.next(response);
   }
@@ -37,7 +38,8 @@ class AppLogInterceptor extends Interceptor {
     final status = err.response?.statusCode;
 
     final statusStr = status != null ? '$status ' : '';
-    print('└─ ❌ ${options.method} ${_shortUri(options.uri)} → $statusStr${err.type.name}  ($elapsed)');
+    print(
+        '└─ ❌ ${options.method} ${_shortUri(options.uri)} → $statusStr${err.type.name}  ($elapsed)');
 
     final hint = err.response?.data?['message'] ?? err.response?.data?['error'];
     if (hint != null) print('   hint: $hint');
@@ -50,7 +52,8 @@ class AppLogInterceptor extends Interceptor {
   String _shortUri(Uri uri) {
     final path = uri.path;
     final query = uri.queryParameters.entries
-        .where((e) => e.key != 'api_key' && e.key != 'apikey') // hide API keys from logs
+        .where((e) =>
+            e.key != 'api_key' && e.key != 'apikey') // hide API keys from logs
         .map((e) => '${e.key}=${e.value}')
         .join('&');
     return query.isEmpty ? path : '$path?$query';

@@ -15,11 +15,11 @@ class UsersDao extends DatabaseAccessor<AppDatabase> with _$UsersDaoMixin {
     final query = (select(usersTable)
           ..orderBy([(u) => OrderingTerm.desc(u.createdAt)]))
         .join([
-          leftOuterJoin(
-            savedMoviesTable,
-            savedMoviesTable.userId.equalsExp(usersTable.id),
-          )
-        ])
+      leftOuterJoin(
+        savedMoviesTable,
+        savedMoviesTable.userId.equalsExp(usersTable.id),
+      )
+    ])
       ..addColumns([count])
       ..groupBy([usersTable.id]);
 

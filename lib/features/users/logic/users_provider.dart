@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movie_discovery/core/error/result.dart';
 import 'package:movie_discovery/features/users/data/users_repository.dart';
 
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, curly_braces_in_flow_control_structures
 
 class UsersNotifier extends AsyncNotifier<void> {
   int _currentPage = 1;
@@ -24,7 +24,9 @@ class UsersNotifier extends AsyncNotifier<void> {
       success: (response) {
         _totalPages = response.totalPages;
         _currentPage = response.page;
-        if (kDebugMode) print('📊 [Users] page $_currentPage/$_totalPages loaded — ${response.data.length} users');
+        if (kDebugMode)
+          print(
+              '📊 [Users] page $_currentPage/$_totalPages loaded — ${response.data.length} users');
       },
       failure: (f) {
         if (kDebugMode) print('⚠️  [Users] page $page failed: ${f.message}');
@@ -35,7 +37,8 @@ class UsersNotifier extends AsyncNotifier<void> {
   Future<void> loadMore() async {
     if (_isFetchingMore || _currentPage >= _totalPages) return;
     _isFetchingMore = true;
-    if (kDebugMode) print('🔽 [Users] loading more — page ${_currentPage + 1}/$_totalPages');
+    if (kDebugMode)
+      print('🔽 [Users] loading more — page ${_currentPage + 1}/$_totalPages');
     await _loadPage(_currentPage + 1);
     _isFetchingMore = false;
   }

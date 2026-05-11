@@ -12,7 +12,10 @@ class UserListShimmer extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            ShimmerBox(width: 44, height: 44, borderRadius: BorderRadius.all(Radius.circular(22))),
+            ShimmerBox(
+                width: 44,
+                height: 44,
+                borderRadius: BorderRadius.all(Radius.circular(22))),
             SizedBox(width: 12),
             Expanded(
               child: Column(

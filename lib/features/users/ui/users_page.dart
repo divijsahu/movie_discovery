@@ -60,8 +60,7 @@ class UsersPage extends ConsumerWidget {
                 return NotificationListener<ScrollNotification>(
                   onNotification: (n) {
                     if (n.metrics.maxScrollExtent > 0 &&
-                        n.metrics.pixels >=
-                            n.metrics.maxScrollExtent - 200) {
+                        n.metrics.pixels >= n.metrics.maxScrollExtent - 200) {
                       ref.read(usersNotifierProvider.notifier).loadMore();
                     }
                     return false;

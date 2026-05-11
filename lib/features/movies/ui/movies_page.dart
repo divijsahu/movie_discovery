@@ -51,8 +51,7 @@ class MoviesPage extends ConsumerWidget {
               return NotificationListener<ScrollNotification>(
                 onNotification: (n) {
                   if (n.metrics.maxScrollExtent > 0 &&
-                      n.metrics.pixels >=
-                          n.metrics.maxScrollExtent - 300) {
+                      n.metrics.pixels >= n.metrics.maxScrollExtent - 300) {
                     ref.read(moviesNotifierProvider.notifier).loadMore();
                   }
                   return false;

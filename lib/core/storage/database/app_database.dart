@@ -16,10 +16,8 @@ class UsersTable extends Table {
   TextColumn get movieTaste => text()();
   TextColumn get email => text().nullable()();
   TextColumn get avatarUrl => text().nullable()();
-  BoolColumn get pendingSync =>
-      boolean().withDefault(const Constant(false))();
-  DateTimeColumn get createdAt =>
-      dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get pendingSync => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 class MoviesTable extends Table {
@@ -36,8 +34,7 @@ class SavedMoviesTable extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get userId => integer().references(UsersTable, #id)();
   IntColumn get movieId => integer().references(MoviesTable, #id)();
-  DateTimeColumn get savedAt =>
-      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get savedAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
   List<Set<Column>> get uniqueKeys => [
@@ -59,11 +56,11 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onUpgrade: (m, from, to) async {
-      if (from < 2) {
-        // Remove duplicate remote users — keep only the row with the lowest id
-        // for each serverId, delete the rest.
-        await customStatement('''
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            // Remove duplicate remote users — keep only the row with the lowest id
+            // for each serverId, delete the rest.
+            await customStatement('''
           DELETE FROM users_table
           WHERE server_id IS NOT NULL
             AND id NOT IN (
@@ -72,9 +69,9 @@ class AppDatabase extends _$AppDatabase {
               GROUP BY server_id
             )
         ''');
-      }
-    },
-  );
+          }
+        },
+      );
 
   static QueryExecutor _openConnection() =>
       driftDatabase(name: 'movie_discovery_db');

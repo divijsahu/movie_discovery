@@ -9,7 +9,8 @@ class MoviesDao extends DatabaseAccessor<AppDatabase> with _$MoviesDaoMixin {
     // Manually check tmdb_id first to handle the unique constraint correctly.
     final existing = await getMovieByTmdbId(movie.tmdbId.value);
     if (existing != null) {
-      await (update(moviesTable)..where((m) => m.tmdbId.equals(movie.tmdbId.value)))
+      await (update(moviesTable)
+            ..where((m) => m.tmdbId.equals(movie.tmdbId.value)))
           .write(movie);
       return existing.id;
     }

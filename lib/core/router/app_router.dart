@@ -42,8 +42,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/movies/:tmdbId',
         builder: (_, state) {
           final tmdbId = int.parse(state.pathParameters['tmdbId']!);
-          final userId =
-              int.parse(state.uri.queryParameters['userId'] ?? '0');
+          final userId = int.parse(state.uri.queryParameters['userId'] ?? '0');
           return MovieDetailPage(tmdbId: tmdbId, activeUserId: userId);
         },
       ),
