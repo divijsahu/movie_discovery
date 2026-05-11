@@ -6,10 +6,10 @@ on:
       flutter_version:
         description: "Flutter version to use"
         required: false
-        default: "3.41.4"
+        default: "3.29.3"
 
 env:
-  FLUTTER_VERSION: ${{ inputs.flutter_version || '3.24.0' }}
+  FLUTTER_VERSION: ${{ inputs.flutter_version || '3.29.3' }}
 
 jobs:
   test:
