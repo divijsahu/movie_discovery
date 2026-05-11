@@ -6,7 +6,7 @@ on:
       flutter_version:
         description: "Flutter version to use"
         required: false
-        default: "3.24.0"
+        default: "3.41.4"
 
 env:
   FLUTTER_VERSION: ${{ inputs.flutter_version || '3.24.0' }}

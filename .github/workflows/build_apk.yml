@@ -6,7 +6,7 @@ on:
       flutter_version:
         description: "Flutter version to use"
         required: false
-        default: "3.24.0"
+        default: "3.41.4"
       retention_days:
         description: "Days to keep the APK artifact"
         required: false
