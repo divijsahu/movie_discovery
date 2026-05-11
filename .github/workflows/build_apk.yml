@@ -1,0 +1,162 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      flutter_version:
+        description: "Flutter version to use"
+        required: false
+        default: "3.24.0"
+      retention_days:
+        description: "Days to keep the APK artifact"
+        required: false
+        default: "14"
+
+env:
+  FLUTTER_VERSION: ${{ inputs.flutter_version || '3.24.0' }}
+
+jobs:
+  # ─── Job 1: Build ─────────────────────────────────────────
+  build:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to create tags + releases
+    outputs:
+      apk_name:     ${{ steps.meta.outputs.apk_name }}
+      version_name: ${{ steps.meta.outputs.version_name }}
+      version_code: ${{ steps.meta.outputs.version_code }}
+      tag:          ${{ steps.meta.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so we can push tags
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build release APK (unsigned)
+        run: flutter build apk --release
+
+      - name: Compute metadata & rename APK
+        id: meta
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d '[:space:]')
+          VERSION_NAME=$(echo "$VERSION" | cut -d'+' -f1)
+          VERSION_CODE=$(echo "$VERSION" | cut -d'+' -f2)
+          TAG="v${VERSION_NAME}+${VERSION_CODE}"
+
+          # Human-readable name: "MD 1.0.0 +1.apk"
+          APK_NAME="MD ${VERSION_NAME} +${VERSION_CODE}.apk"
+
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             "build/app/outputs/flutter-apk/${APK_NAME}"
+
+          echo "apk_name=${APK_NAME}"     >> $GITHUB_OUTPUT
+          echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "version_code=${VERSION_CODE}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}"               >> $GITHUB_OUTPUT
+
+      - name: Create & push git tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Delete tag locally + remotely if it already exists (re-run safety)
+          git tag -d "${{ steps.meta.outputs.tag }}" 2>/dev/null || true
+          git push origin ":refs/tags/${{ steps.meta.outputs.tag }}" 2>/dev/null || true
+          git tag "${{ steps.meta.outputs.tag }}"
+          git push origin "${{ steps.meta.outputs.tag }}"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.apk_name }}
+          path: build/app/outputs/flutter-apk/${{ steps.meta.outputs.apk_name }}
+          retention-days: ${{ inputs.retention_days }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name:   ${{ steps.meta.outputs.tag }}
+          name:       "Movie Discovery ${{ steps.meta.outputs.version_name }} (build ${{ steps.meta.outputs.version_code }})"
+          body: |
+            ## 🎬 Movie Discovery — ${{ steps.meta.outputs.version_name }}
+
+            | Field        | Value |
+            |---|---|
+            | Version      | `${{ steps.meta.outputs.version_name }}` |
+            | Build number | `${{ steps.meta.outputs.version_code }}` |
+            | Flutter      | `${{ env.FLUTTER_VERSION }}` |
+            | Commit       | `${{ github.sha }}` |
+            | Branch       | `${{ github.ref_name }}` |
+
+            ### Install
+            Download **${{ steps.meta.outputs.apk_name }}** below and install on any Android device.
+            > ⚠️ This is an unsigned debug-key build — intended for review only.
+          files: build/app/outputs/flutter-apk/${{ steps.meta.outputs.apk_name }}
+          draft: false
+          prerelease: false
+
+      - name: Summary
+        run: |
+          echo "## ✅ Build Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| APK | \`${{ steps.meta.outputs.apk_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tag | \`${{ steps.meta.outputs.tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release | [View on GitHub](https://github.com/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.tag }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Flutter | \`${{ env.FLUTTER_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+
+  # ─── Job 2: Artifact Cleanup ──────────────────────────────
+  cleanup:
+    name: Artifact Cleanup
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      actions: write
+    steps:
+      - name: Delete artifacts older than ${{ inputs.retention_days }} days
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const retentionDays = parseInt('${{ inputs.retention_days }}') || 14;
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - retentionDays);
+
+            const artifacts = await github.paginate(
+              github.rest.actions.listArtifactsForRepo,
+              { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
+            );
+
+            let deleted = 0;
+            for (const artifact of artifacts) {
+              if (new Date(artifact.created_at) < cutoff) {
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id,
+                });
+                console.log(`Deleted: ${artifact.name} (${artifact.created_at})`);
+                deleted++;
+              }
+            }
+            console.log(`Total deleted: ${deleted}`);
