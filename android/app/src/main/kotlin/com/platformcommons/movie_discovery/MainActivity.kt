@@ -1,4 +1,4 @@
-package com.example.provider_app_template
+package com.platformcommons.movie_discovery
 
 import io.flutter.embedding.android.FlutterActivity
 
